@@ -1,0 +1,38 @@
+{
+  "name": "sideren-bulk-apikey",
+  "version": "1.0.0",
+  "description": "Bulk API keys for sideren.io — free tier: $2 credit per account, 134 models (deepseek-v4-pro, glm-5.3, kimi-k2.7-code, gemini-3.8-flash). One account per key; mint any number.",
+  "license": "MIT",
+  "type": "commonjs",
+  "bin": {
+    "sideren-bulk-apikey": "cli.js",
+    "sideren-bulk-apikey-launcher": "launcher.js"
+  },
+  "main": "cli.js",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "start": "node launcher.js",
+    "mint": "node cli.js"
+  },
+  "keywords": [
+    "api-key",
+    "bulk",
+    "register",
+    "launcher",
+    "sideren",
+    "bulk",
+    "apikey"
+  ],
+  "files": [
+    "batch.js",
+    "cli.js",
+    "launcher.js",
+    "proxy.js",
+    "rest-signup.js",
+    "verify.js",
+    "README.md",
+    "LICENSE"
+  ]
+}
