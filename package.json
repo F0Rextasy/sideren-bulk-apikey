@@ -5,16 +5,17 @@
   "license": "MIT",
   "type": "commonjs",
   "bin": {
-    "sideren-bulk-apikey": "cli.js",
-    "sideren-bulk-apikey-launcher": "launcher.js"
+    "sideren-bulk-apikey": "src/cli.js",
+    "sideren-bulk-apikey-9router": "src/connect-9router.js",
+    "sideren-bulk-apikey-launcher": "src/launcher.js"
   },
-  "main": "cli.js",
+  "main": "src/cli.js",
   "engines": {
     "node": ">=18"
   },
   "scripts": {
-    "start": "node launcher.js",
-    "mint": "node cli.js"
+    "start": "node src/launcher.js",
+    "mint": "node src/cli.js"
   },
   "keywords": [
     "api-key",
@@ -23,15 +24,19 @@
     "launcher",
     "sideren",
     "bulk",
-    "apikey"
+    "apikey",
+    "9router",
+    "openai-compatible"
   ],
   "files": [
-    "batch.js",
-    "cli.js",
-    "launcher.js",
-    "proxy.js",
-    "rest-signup.js",
-    "verify.js",
+    "src/batch.js",
+    "src/cli.js",
+    "src/connect-9router.js",
+    "src/launcher.js",
+    "src/proxy.js",
+    "src/rest-signup.js",
+    "src/verify.js",
+    "src/models.json",
     "README.md",
     "LICENSE"
   ]

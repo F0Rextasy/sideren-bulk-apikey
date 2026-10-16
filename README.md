@@ -1,25 +1,25 @@
 <div align="center">
 
 ```
-███████╗ ██████╗ ██████╗ ███████╗██╗  ██╗████████╗ █████╗ ███████╗██╗   ██╗
-██╔════╝██╔═████╗██╔══██╗██╔════╝╚██╗██╔╝╚══██╔══╝██╔══██╗██╔════╝╚██╗ ██╔╝
-█████╗  ██║██╔██║██████╔╝█████╗   ╚███╔╝    ██║   ███████║███████╗ ╚████╔╝
-██╔══╝  ████╔╝██║██╔══██╗██╔══╝   ██╔██╗    ██║   ██╔══██║╚════██║  ╚██╔╝
-██║     ╚██████╔╝██║  ██║███████╗██╔╝ ██╗   ██║   ██║  ██║███████║   ██║
-╚═╝      ╚═════╝ ╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝   ╚═╝   ╚═╝  ╚═╝╚══════╝   ╚═╝
+███████╗██╗██████╗ ███████╗██████╗ ███████╗███╗   ██╗
+██╔════╝██║██╔══██╗██╔════╝██╔══██╗██╔════╝████╗  ██║
+███████╗██║██║  ██║█████╗  ██████╔╝█████╗  ██╔██╗ ██║
+╚════██║██║██║  ██║██╔══╝  ██╔══██╗██╔══╝  ██║╚██╗██║
+███████║██║██████╔╝███████╗██║  ██║███████╗██║ ╚████║
+╚══════╝╚═╝╚═════╝ ╚══════╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═══╝
 ```
 
 # sideren-bulk-apikey
 
-**Bulk API keys for [Sideren / LayerX1](https://www.sideren.io) — one account per key, two REST calls each, $2 free credit per account, 134 models, verified live, any number.**
+**Bulk-create Sideren (sideren.io) accounts with auto-generated API keys — OpenAI-compatible inference + 9Router connector.**
 
 [![Node](https://img.shields.io/badge/Node-%E2%89%A518-3DA639?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org)
 [![Dependencies](https://img.shields.io/badge/dependencies-0-blue?style=for-the-badge)](#)
 [![License](https://img.shields.io/badge/license-MIT-6ea8fe?style=for-the-badge)](LICENSE)
 [![Models](https://img.shields.io/badge/models-134-412991?style=for-the-badge)](https://docs.layerx1.com)
-[![X](https://img.shields.io/badge/X-%40bigbullapp-000000?style=for-the-badge&logo=x&logoColor=white)](https://x.com/bigbullapp)
+[![9Router](https://img.shields.io/badge/9Router-connector-8B5CF6.svg?style=for-the-badge)](#-connect-to-9router)
 
-[🛠 Quick start](#-quick-start) · [✅ Verified](#-verified-working--every-key-is-tested) · [🧭 How it works](#-how-it-works) · [🤖 Models & free tier](#-models--free-tier) · [⚙️ Options](#️-cli-options) · [🛰️ Proxies](#️-behind-a-proxy) · [🐞 Issues](#-issues)
+[🛠 Quick start](#-quick-start) · [✅ Verified](#-verified-working--every-key-is-tested) · [🧭 How it works](#-how-it-works) · [🤖 Models & free tier](#-models--free-tier) · [🔌 9Router](#-connect-to-9router) · [⚙️ Options](#️-cli-options) · [🛰️ Proxies](#️-behind-a-proxy) · [🐞 Issues](#-issues)
 
 </div>
 
@@ -60,29 +60,36 @@ cd sideren-bulk-apikey
 printf 'socks5://127.0.0.1:1080\n' > proxies.txt
 
 # 2) go
-node launcher.js            # interactive: mint / verify / settings / help
+node src/launcher.js            # interactive: mint / verify / settings / help
 # or directly:
-node cli.js --count 30      # any N — 30 is just the default sample
+node src/cli.js --count 30      # any N — 30 is just the default sample
 ```
 
-`keys.txt` (one key per line, mirrored to `%USERPROFILE%\sideren-keys.txt`) is written **only** after a
+The tools read `proxies.txt` from the **repository root** and write `keys.txt`, `accounts.json`
+and `outputs/` there too — the code lives in `src/`, the data stays beside the README.
+
+`keys.txt` (one key per line
+, mirrored to `%USERPROFILE%\sideren-keys.txt`) is written **only** after a
 key answers `GET /v1/models`, `GET /v1/me` and a real chat completion; `accounts.json` keeps the
 e-mail/password/user-id/key record for every account.
 
 ### 🖱️ The launcher
 
 ```
-╔═══════════════════════════════════════════════════════════════════════════════╗
-║  ███████╗ ██████╗ ██████╗ ███████╗██╗  ██╗████████╗ █████╗ ███████╗██╗   ██╗  ║
-║  ██╔════╝██╔═████╗██╔══██╗██╔════╝╚██╗██╔╝╚══██╔══╝██╔══██╗██╔════╝╚██╗ ██╔╝  ║
-║  █████╗  ██║██╔██║██████╔╝█████╗   ╚███╔╝    ██║   ███████║███████╗ ╚████╔╝   ║
-║  ██╔══╝  ████╔╝██║██╔══██╗██╔══╝   ██╔██╗    ██║   ██╔══██║╚════██║  ╚██╔╝    ║
-║  ██║     ╚██████╔╝██║  ██║███████╗██╔╝ ██╗   ██║   ██║  ██║███████║   ██║     ║
-║  ╚═╝      ╚═════╝ ╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝   ╚═╝   ╚═╝  ╚═╝╚══════╝   ╚═╝     ║
-║  sideren-bulk-apikey                                                          ║
-║  one account per key — two REST calls each                                    ║
-╚═══════════════════════════════════════════════════════════════════════════════╝
-  github.com/F0Rextasy · x.com/bigbullapp
+╔═════════════════════════════════════════════════════════╗
+║                                                         ║
+║  ███████╗██╗██████╗ ███████╗██████╗ ███████╗███╗   ██╗  ║
+║  ██╔════╝██║██╔══██╗██╔════╝██╔══██╗██╔════╝████╗  ██║  ║
+║  ███████╗██║██║  ██║█████╗  ██████╔╝█████╗  ██╔██╗ ██║  ║
+║  ╚════██║██║██║  ██║██╔══╝  ██╔══██╗██╔══╝  ██║╚██╗██║  ║
+║  ███████║██║██████╔╝███████╗██║  ██║███████╗██║ ╚████║  ║
+║  ╚══════╝╚═╝╚═════╝ ╚══════╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═══╝  ║
+║                                                         ║
+║  sideren-bulk-apikey                                    ║
+║  one account per key — two REST calls each              ║
+║                                                         ║
+╚═════════════════════════════════════════════════════════╝
+  MIT · OpenAI-compatible · 9Router connector
 ```
 
 ## ✅ Verified working — every key is tested
@@ -97,7 +104,7 @@ e-mail/password/user-id/key record for every account.
 | A final sweep of the shipped list | **30/30 OK** |
 
 ```bash
-node cli.js --verify-only    # models + balance + a chat call for every key
+node src/cli.js --verify-only    # models + balance + a chat call for every key
 ```
 
 ## 🧭 How it works
@@ -111,7 +118,7 @@ node cli.js --verify-only    # models + balance + a chat call for every key
 
 ## 🤖 Models & free tier
 
-`GET /v1/models` returns **134 models** (see [`models.json`](models.json)) and both protocols are served
+`GET /v1/models` returns **134 models** (see [`models.json`](src/models.json)) and both protocols are served
 by the same key:
 
 ```
@@ -138,12 +145,43 @@ curl https://api.sideren.io/v1/chat/completions \
   -d '{"model":"@sdn/llama-3.3-70b","messages":[{"role":"user","content":"hi"}]}'
 ```
 
+## 🔌 Connect to 9Router
+
+The keys this tool mints are ordinary OpenAI-compatible credentials, so a local
+9Router instance can serve them like any other provider: one `openai-compatible`
+node for Sideren (sideren.io), one connection per key.
+
+```bash
+node src/connect-9router.js \
+  --base http://localhost:20128 --password 123456 \
+  --api-key <key>            # or env NINEROUTER_API_KEY
+```
+
+The launcher menu and the CLI dispatcher drive the same connector:
+
+```bash
+node src/launcher.js --connect-9router    # asks for base URL, password and key (the key is not echoed)
+node src/cli.js connect --api-key <key>   # the same task, non-interactive
+node src/connect-9router.js --help        # every flag and default
+```
+
+Defaults: base `http://localhost:20128`, password `123456`, model prefix
+`sideren`, node `sideren`, upstream `https://api.sideren.io/v1`, default model
+`@sdn/llama-3.3-70b`. Register another minted key with `--name "<label 2>"` — the node stays and
+every key becomes another connection 9Router can load-balance across. Then pick a model inside
+9Router:
+
+```
+sideren/@sdn/llama-3.3-70b
+sideren/sdn-glm-5.3
+```
+
 ## ⚙️ CLI options
 
 ```bash
-node cli.js --count N        # mint N accounts (any N, default 30)
-node cli.js --verify-only    # re-verify every key in keys.txt
-node cli.js --help
+node src/cli.js --count N        # mint N accounts (any N, default 30)
+node src/cli.js --verify-only    # re-verify every key in keys.txt
+node src/cli.js --help
 ```
 
 | Environment variable | Default | Meaning |
@@ -163,21 +201,16 @@ another exit when one dies.
 | --- | --- |
 | `keys.txt` | one verified key per line — git-ignored, never committed |
 | `accounts.json` | e-mail / password / user id / key / verification record per account |
-| [`models.json`](models.json) | the live 134-model catalogue |
+| [`models.json`](src/models.json) | the live 134-model catalogue |
 | `outputs/` | verification sweep results — git-ignored |
 
 ## 🐞 Issues
 
 If Sideren changes its identity backend (signup settings, the RPC name, the key prefix), the tool
-stops at that step and says so. **[Open an issue](https://github.com/F0Rextasy/sideren-bulk-apikey/issues)**
+stops at that step and says so. **[Open an issue](../../issues)**
 with the command you ran and the exact output; PRs are welcome.
 
 ## 📄 License
 
-MIT © 2026 — see [LICENSE](LICENSE).
+[MIT](LICENSE) © 2026 sideren-bulk-apikey contributors — use it on accounts you are allowed to create.
 
-<div align="center">
-
-**[github.com/F0Rextasy](https://github.com/F0Rextasy)** · **[x.com/bigbullapp](https://x.com/bigbullapp)**
-
-</div>
