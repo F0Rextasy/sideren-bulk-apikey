@@ -24,6 +24,12 @@
 
 </div>
 
+<div align="center">
+
+**English** · [Türkçe](README.tr.md) · [中文](README.cn.md) · [日本語](README.ja.md) · [한국어](README.ko.md) · [Español](README.es.md) · [Français](README.fr.md) · [Deutsch](README.de.md) · [Русский](README.ru.md) · [Português](README.pt.md)
+
+</div>
+
 ---
 
 ## ✨ Why this exists
@@ -55,14 +61,9 @@ node src/cli.js --verify-only     # every key in keys.txt is re-tested with a re
 
 `GET /v1/models` returns **134 models** (see [`models.json`](src/models.json)) and both protocols are served by the same key. Headline ids:
 
-| Family | Model IDs |
-| --- | --- |
-| **DeepSeek** | `sdn-deepseek-v4-pro`, `sdn-deepseek-v4-flash` |
-| **Z.ai (GLM)** | `sdn-glm-5.3`, `sdn-glm-5.3-flash`, `sdn-glm-5.2`, `sdn-glm-4.7-flash` |
-| **Moonshot** | `sdn-kimi-k2.7-code` |
-| **Google** | `sdn-gemini-3.8-flash` |
-| **OpenAI-compatible** | `sdn-gpt-6-astra`, `sdn-gpt-oss-120b`, `sdn-gpt-oss-20b` |
-| **NVIDIA / Qwen / Meta / others** | `sdn-nemotron-3-120b`, `sdn-qwen3.8-27b`, `sdn-mai-thinking-1`, `sdn-llama-3.3-70b`, `sdn-gemma-4-26b` |
+|Model|✓|
+|---|---|
+|`sdn-llama-3.3-70b`|✓|
 
 Live probe of one key:
 
