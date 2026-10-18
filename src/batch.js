@@ -19,11 +19,23 @@ const { CookieJar, fetchUrl } = require(path.join(__dirname, '..', '..', 'basete
 const { parseProxy, isLocalHost } = require('./proxy.js');
 
 const opt = (n, d) => { const h = process.argv.find((a) => a.startsWith(`--${n}=`)); return h ? h.split('=').slice(1).join('=') : d; };
+// Run-shape presets (operator standard v3): `--preset=turbo|balanced|safe` sets the
+// worker count (turbo = 5, under this repo's 6-worker ceiling) and the pacing gap;
+// an explicit `--conc` / `--gap` wins and no `--preset` keeps today's defaults.
+const { presetArgv, resolvePreset } = require('./preset');
+const PRESET = resolvePreset({
+  preset: presetArgv(process.argv.slice(2)),
+  conc: null,
+  gap: opt('gap', null) == null ? null : parseFloat(opt('gap', null)),
+  defaultConc: 3,
+});
+const GAP_MS = PRESET.gap == null ? null : Math.max(0, PRESET.gap) * 1000;
 const COUNT = parseInt(opt('count', '29'), 10);
-const CONC = Math.max(1, Math.min(6, parseInt(opt('conc', '3'), 10)));
+const CONC = Math.max(1, Math.min(6, parseInt(opt('conc', String(PRESET.conc)), 10)));
 const TAG = opt('tag', 'b1');
 const USE_BROKER = opt('broker', '1') === '1';
 const BROKER = parseInt(opt('broker-port', '9700'), 10);
+
 
 const ROOT = path.join(__dirname, '..');
 const OUT = path.join(ROOT, 'outputs');
@@ -35,6 +47,10 @@ const COOKIE_NAME = 'sb-ypqqszrmcxybjuobtflv-auth-token';
 process.on('unhandledRejection', (e) => log(`[unhandled] ${String((e && e.message) || e).slice(0, 120)}`));
 process.on('uncaughtException', (e) => log(`[uncaught] ${String((e && e.message) || e).slice(0, 120)}`));
 
+// The events file lands in outputs/, and the summary is written there too: on a
+// fresh clone the directory does not exist yet, so create it once here instead
+// of letting the summary write die with ENOENT after a finished run.
+fs.mkdirSync(OUT, { recursive: true });
 const EVF = path.join(OUT, `batch-${TAG}.jsonl`);
 function log(msg) { console.log(`[${new Date().toISOString().slice(11, 19)}] ${msg}`); }
 function ev(obj) { try { fs.appendFileSync(EVF, JSON.stringify({ at: new Date().toISOString(), ...obj }) + '\n'); } catch (e) {} }
@@ -259,15 +275,19 @@ async function mintOne(n) {
     for (;;) {
       const n = idx++;
       if (n >= COUNT) return;
+      console.log(`… #${n + 1} başladı (pool ${EXITS.length} ${EXITS.length === 1 ? 'exit' : 'exits'})`);
       try {
         const { record, verify } = await mintOne(n + 1);
         done++;
         results.push({ n: record.n, key: record.keyPrefix, ok: verify.chatOk && verify.balance > 0, balance: verify.balance });
         log(`[${done}/${COUNT}] ${record.keyPrefix} models=${verify.modelsStatus} balance=$${verify.balance} chat=${verify.chatStatus}${verify.chatOk ? ' ok' : ' FAIL'} (${verify.snippet || ''})`);
+        console.log(`✓ #${n + 1} KEY ALINDI: ${record.keyPrefix}   [${done} ok / ${n + 1} deneme]`);
       } catch (e) {
         failures.push({ n: n + 1, err: String(e.message).slice(0, 140) });
         log(`[fail ${n + 1}] ${String(e.message).slice(0, 120)}`);
+        console.log(`✗ #${n + 1} key yok: ${String(e.message).slice(0, 200)}`);
       }
+      if (GAP_MS) await sleep(GAP_MS);
     }
   }
   await Promise.all(Array.from({ length: CONC }, (_, w) => worker(w)));
@@ -280,5 +300,6 @@ async function mintOne(n) {
   };
   fs.writeFileSync(path.join(OUT, `batch-${TAG}.summary.json`), JSON.stringify(summary, null, 2));
   log(`done: minted ${done}/${COUNT}, verified ${verified}, failures ${failures.length}`);
+  console.log(`BATCH ${verified}/${COUNT} OK`);
   ev({ tag: 'finish', ...summary, results: undefined, failures: undefined });
 })();

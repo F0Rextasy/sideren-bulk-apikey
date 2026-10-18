@@ -154,6 +154,7 @@ inbox (one address per account)                                  a fresh address
 
 ```bash
 node src/cli.js --count N        # mint N accounts (any N, default 30)
+node src/cli.js --preset turbo   # run shape: turbo = 5 workers, balanced = 4, safe = 2
 node src/cli.js --verify-only    # re-verify every key in keys.txt
 node src/cli.js --help
 ```
@@ -162,6 +163,8 @@ node src/cli.js --help
 | --- | --- | --- |
 | `SIDEREN_PROXIES` | `proxies.txt` | pool file, one proxy per line |
 | `PIN_PROXY` | — | pin a single egress for every call (e.g. `socks5://127.0.0.1:40000`) |
+
+Turbo önerilir (5); daha fazlası zayıf bilgisayarda yük/ban riski.
 
 ## 🛰️ Behind a proxy
 

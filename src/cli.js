@@ -45,9 +45,17 @@ if (args.includes('--connect-9router')) {
   process.exit(res.status ?? 0);
 }
 
+// Run-shape presets (operator standard v3) and the flags they set are forwarded to
+// batch.js verbatim; without --preset batch.js keeps its own historical defaults.
+const forwarded = [];
+for (const name of ['--preset', '--conc', '--gap']) {
+  const v = arg(name, null);
+  if (v != null) forwarded.push(`${name}=${v}`);
+}
+
 const child = args.includes('--verify-only')
   ? ['verify.js']
-  : ['batch.js', '--count=' + arg('--count', '30')];
+  : ['batch.js', '--count=' + arg('--count', '30'), ...forwarded];
 
 const res = spawnSync(process.execPath, [path.join(__dirname, child[0]), ...child.slice(1)], {
   windowsHide: true,

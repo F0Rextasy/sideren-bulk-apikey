@@ -18,12 +18,16 @@ const path = require('path');
 const readline = require('readline');
 const { spawnSync } = require('child_process');
 
+// Keep the menu alive when a task's socket dies mid-run.
+process.on('uncaughtException', (e) => console.log(`WARN uncaught: ${String(e && e.message).slice(0, 180)}`));
+
 const CONFIG = path.join(__dirname, 'launcher.config.json');
 const CLI = path.join(__dirname, 'cli.js');
 const CONNECT = path.join(__dirname, 'connect-9router.js');
 
 const defaults = {
   count: 30,
+  preset: '',
   proxyFile: process.env.SIDEREN_PROXIES || 'proxies.txt',
   pinProxy: '',
 };
@@ -109,13 +113,16 @@ function banner() {
 
 async function mintFlow(cfg) {
   cfg.count = parseInt(await ask('How many accounts/keys do you want (any number)', cfg.count), 10) || cfg.count;
+  const preset = String(await ask('Run-shape preset (turbo/balanced/safe, blank = the repo default)', cfg.preset)).trim().toLowerCase();
+  cfg.preset = preset;
   cfg.proxyFile = await ask('Proxy list file (one proxy per line)', cfg.proxyFile);
   cfg.pinProxy = await ask('Pin one egress for every call? (e.g. socks5://127.0.0.1:40000, blank = rotate)', cfg.pinProxy);
   saveConfig(cfg);
 
   const env = { SIDEREN_PROXIES: cfg.proxyFile };
   if (cfg.pinProxy) env.PIN_PROXY = cfg.pinProxy;
-  run(['--count', String(cfg.count)], env);
+  // turbo = 5 workers (recommended), balanced = 4, safe = 2 — cli.js forwards it.
+  run(['--count', String(cfg.count), ...(preset ? ['--preset=' + preset] : [])], env);
 }
 
 async function verifyFlow(cfg) {
