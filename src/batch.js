@@ -15,7 +15,7 @@
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const { CookieJar, fetchUrl } = require(path.join(__dirname, '..', '..', 'baseten', 'src', 'http'));
+const { CookieJar, fetchUrl } = require('./vendor/http.js');
 const { parseProxy, isLocalHost } = require('./proxy.js');
 
 const opt = (n, d) => { const h = process.argv.find((a) => a.startsWith(`--${n}=`)); return h ? h.split('=').slice(1).join('=') : d; };

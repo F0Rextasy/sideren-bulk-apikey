@@ -12,7 +12,7 @@
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const { CookieJar, fetchUrl } = require(path.join(__dirname, '..', '..', 'baseten', 'src', 'http'));
+const { CookieJar, fetchUrl } = require('./vendor/http.js');
 const { parseProxy } = require('./proxy.js');
 
 const SUPA = 'https://data.sideren.io';

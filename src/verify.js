@@ -9,7 +9,7 @@
  */
 const fs = require('fs');
 const path = require('path');
-const { CookieJar, fetchUrl } = require(path.join(__dirname, '..', '..', 'baseten', 'src', 'http'));
+const { CookieJar, fetchUrl } = require('./vendor/http.js');
 const { parseProxy, isLocalHost } = require('./proxy.js');
 
 const ROOT = path.join(__dirname, '..');
