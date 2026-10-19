@@ -32,8 +32,6 @@
 
 ---
 
-
-
 ## ✨ Por que isto existe
 
 A Sideren (LayerX1) concede a cada conta **$2 de crédito gratuito** e sua própria chave de API, e ambos ficam na **conta** — então a unidade útil é *uma conta por chave*. A API em `api.sideren.io/v1` fala **os dois protocolos**, OpenAI (`/v1/chat/completions`) e Anthropic (`/v1/messages`), com a mesma chave. Esta ferramenta cria contas e chaves via REST puro — sem navegador, sem caixa de e-mail.
