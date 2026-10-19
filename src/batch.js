@@ -39,7 +39,7 @@ const BROKER = parseInt(opt('broker-port', '9700'), 10);
 
 const ROOT = path.join(__dirname, '..');
 const OUT = path.join(ROOT, 'outputs');
-const PL = path.join(__dirname, '..', '..');
+const PL = path.join(__dirname, '..');
 const SUPA = 'https://data.sideren.io';
 const ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlwcXFzenJtY3h5Ymp1b2J0Zmx2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI0NzE5MzMsImV4cCI6MjA5ODA0NzkzM30.25uc5g50oqfBqmQmKocMDIukfQ8mKLvJlzesP-vRxyY';
 const COOKIE_NAME = 'sb-ypqqszrmcxybjuobtflv-auth-token';

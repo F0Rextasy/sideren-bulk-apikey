@@ -14,7 +14,7 @@ const { parseProxy, isLocalHost } = require('./proxy.js');
 
 const ROOT = path.join(__dirname, '..');
 const OUT = path.join(ROOT, 'outputs');
-const PL = path.join(__dirname, '..', '..');
+const PL = path.join(__dirname, '..');
 const KEYS = process.argv[2] || path.join(ROOT, 'keys.txt');
 process.on('unhandledRejection', (e) => console.log('[unhandled]', String((e && e.message) || e).slice(0, 100)));
 process.on('uncaughtException', (e) => console.log('[uncaught]', String((e && e.message) || e).slice(0, 100)));
