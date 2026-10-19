@@ -59,14 +59,17 @@ node src/cli.js --verify-only     # every key in keys.txt is re-tested with a re
 
 ## 🤖 Models — all 134 of them
 
-`GET /v1/models` returns **134 models** (see [`models.json`](src/models.json)) and both protocols are served by the same key. Headline ids:
+`GET /v1/models` returns **134 models** (see [`models.json`](src/models.json)) and both protocols are served by the same key; the 5 ids below answered a live chat call with `200` on 2026-10-19:
 
 |Model|✓|
 |---|---|
 |`@sdn/deepseek-v4.1-flash`|✓|
 |`@sdn/gpt-oss-120b`|✓|
+|`@sdn/deepseek-v4.1-flash-1017`|✓|
+|`@sdn/devstral-2-123b`|✓|
+|`@sdn/kimi-k2.5`|✓|
 
-The catalogue holds **134 ids**; the **Free plan** covers these two models — everything else answers `not in the Free plan` (Starter/Pro required).
+The catalogue holds **134 ids**; the **Free plan** covers these five models — everything else answers `not in the Free plan` (Starter/Pro required).
 
 Live probe of one key:
 
