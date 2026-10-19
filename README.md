@@ -30,6 +30,8 @@
 
 </div>
 
+
+
 ---
 
 ## ✨ Why this exists
@@ -63,7 +65,10 @@ node src/cli.js --verify-only     # every key in keys.txt is re-tested with a re
 
 |Model|✓|
 |---|---|
-|`sdn-llama-3.3-70b`|✓|
+|`@sdn/deepseek-v4.1-flash`|✓|
+|`@sdn/gpt-oss-120b`|✓|
+
+The catalogue holds **134 ids**; the **Free plan** covers these two models — everything else answers `not in the Free plan` (Starter/Pro required).
 
 Live probe of one key:
 

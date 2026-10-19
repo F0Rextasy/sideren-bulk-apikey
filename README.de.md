@@ -20,7 +20,7 @@
 [![9Router](https://img.shields.io/badge/9Router-connector-8B5CF6?style=for-the-badge)](#-connect-to-9router)
 [![X](https://img.shields.io/badge/X-%40bigbullapp-000000?style=for-the-badge&logo=x&logoColor=white)](https://x.com/bigbullapp)
 
-[🛠 Schnellstart](#-quick-start) · [🎁 Free-Tarif](#-free-tier--how-much-you-get) · [🤖 Modelle](#-models--all-134-of-them) · [🧪 API nutzen](#-how-to-use-the-api) · [✅ Verifiziert](#-verified-working--every-key-is-tested) · [🧭 So funktioniert's](#-how-it-works) · [🔌 9Router](#-connect-to-9router) · [⚙️ Optionen](#️-cli-options) · [🛰️ Proxies](#️-behind-a-proxy) · [🐞 Probleme](#-issues)
+[🛠 Schnellstart](#-quick-start) · [🎁 Free-Tier](#-free-tier--how-much-you-get) · [🤖 Modelle](#-models--all-134-of-them) · [🧪 API verwenden](#-how-to-use-the-api) · [✅ Verifiziert](#-verified-working--every-key-is-tested) · [🧭 So funktioniert es](#-how-it-works) · [🔌 9Router](#-connect-to-9router) · [⚙️ Optionen](#️-cli-options) · [🛰️ Proxys](#️-behind-a-proxy) · [🐞 Probleme](#-issues)
 
 </div>
 
@@ -30,43 +30,45 @@
 
 </div>
 
-
 ---
 
 ## ✨ Warum es das gibt
 
-Sideren (LayerX1) gibt jedem Konto **2 $ kostenloses Guthaben** und einen eigenen API-Schlüssel, und beides lebt auf dem **Konto** — die sinnvolle Einheit ist also *ein Konto pro Schlüssel*. Die API unter `api.sideren.io/v1` spricht **beide Protokolle**, OpenAI (`/v1/chat/completions`) und Anthropic (`/v1/messages`), mit demselben Schlüssel. Dieses Tool erzeugt Konten und Schlüssel über reines REST — kein Browser, kein Postfach.
+Sideren (LayerX1) gibt jedem Konto **$2 kostenloses Guthaben** und einen eigenen API-Schlüssel, und beides liegt beim **Konto** — die nützliche Einheit ist also *ein Konto pro Schlüssel*. Die API unter `api.sideren.io/v1` spricht **beide Protokolle**, OpenAI (`/v1/chat/completions`) und Anthropic (`/v1/messages`), mit demselben Schlüssel. Dieses Tool erzeugt Konten und Schlüssel über einfaches REST — kein Browser, kein Postfach.
 
-## 🎁 Free-Tarif — wie viel du bekommst
+## 🎁 Free-Tier — wie viel du bekommst
 
-**Jedes neue Sideren-Konto erhält eine einmalige Gutschrift von 2 $, serverseitig bei der Registrierung gewährt — keine Karte, kein Postfach.**
+**Jedes neue Sideren-Konto erhält ein einmaliges Guthaben von $2, serverseitig bei der Registrierung gewährt — keine Karte, kein Postfach.**
 
 | Was | Wert |
 | --- | --- |
-| Willkommensguthaben | **2,00 $** pro Konto (`GET /v1/me` → `balance_usd: 2`, `plan: "free"`) — gemessen |
+| Willkommensguthaben | **$2.00** pro Konto (`GET /v1/me` → `balance_usd: 2`, `plan: "free"`) — gemessen |
 | Karte erforderlich | **Nein** |
-| Rate-Limit | Free-Tarif: erste 3 Tage **15 Anfragen/Min. + 2 gleichzeitig**, danach **4 Anfragen/Min. + 1 gleichzeitig**, bis ein Tarif gekauft wird |
+| Ratenlimit | Free-Plan: erste 3 Tage **15 Anfragen/min + 2 parallel**, dann **4 Anfragen/min + 1 parallel**, bis ein Plan gekauft wird |
 | Token-Grenze | 600k Tokens/Monat, 50k Eingabe / 4k Ausgabe pro Aufruf |
 | Registrierung | REST: E-Mail + Passwort (`POST /auth/v1/signup`) — kein E-Mail-Code, kein Browser |
-| Die skalierende Einheit | **ein Konto = ein Schlüssel** → `--count N` bedeutet wirklich „N kostenlose Konten" |
+| Die skalierende Einheit | **ein Konto = ein Schlüssel** → `--count N` bedeutet eigentlich „N kostenlose Konten“ |
 
-**So bekommst du mehr:** Das Guthaben lebt auf dem Konto — ein Konto pro Schlüssel, und `--count N` erzeugt N Konten, jedes mit eigenen 2 $. Ein erzeugter Schlüssel antwortet mit `200` auf `/v1/models`, `/v1/me` und eine echte Chat-Completion, das Guthaben ist also sofort einsetzbar (`trial.ends_at` liegt drei Tage nach der Erstellung).
+**So bekommst du mehr:** Das Guthaben liegt beim Konto — ein Konto pro Schlüssel, und `--count N` erzeugt N Konten, jedes mit eigenen $2. Ein erzeugter Schlüssel antwortet mit `200` auf `/v1/models`, `/v1/me` und eine echte Chat-Vervollständigung, sodass das Guthaben sofort ausgegeben werden kann (`trial.ends_at` liegt drei Tage nach der Erstellung).
 
-> 💡 Der Free-Tarif wird von Sideren festgelegt und kann sich ändern. Prüfe die aktuellen Zahlen auf [sideren.io](https://sideren.io) — und lass die eigene Prüfung des Tools entscheiden:
+> 💡 Der Free-Tier wird von Sideren festgelegt und kann sich ändern. Prüfe die aktuellen Zahlen auf [sideren.io](https://sideren.io) — und lass das Gate des Tools entscheiden:
 
 ```bash
 node src/cli.js --verify-only     # every key in keys.txt is re-tested with a real chat call
 ```
 
-## 🤖 Modelle — alle 134
+## 🤖 Modelle — alle 134 davon
 
-`GET /v1/models` liefert **134 Modelle** (siehe [`models.json`](src/models.json)) und beide Protokolle werden mit demselben Schlüssel bedient. Wichtigste IDs:
+`GET /v1/models` gibt **134 Modelle** zurück (siehe [`models.json`](src/models.json)), und beide Protokolle werden vom selben Schlüssel bedient. Wichtigste IDs:
 
 |Modell|✓|
 |---|---|
-|`sdn-llama-3.3-70b`|✓|
+|`@sdn/deepseek-v4.1-flash`|✓|
+|`@sdn/gpt-oss-120b`|✓|
 
-Live-Abfrage eines Schlüssels:
+Der Katalog enthält **134 IDs**; der **Free-Plan** deckt diese beiden Modelle ab — alles andere antwortet mit `not in the Free plan` (Starter/Pro erforderlich).
+
+Live-Test eines Schlüssels:
 
 ```bash
 curl https://api.sideren.io/v1/chat/completions \
@@ -74,9 +76,9 @@ curl https://api.sideren.io/v1/chat/completions \
   -d '{"model":"sdn-glm-5.3","messages":[{"role":"user","content":"hi"}]}'
 ```
 
-## 🧪 So nutzt du die API
+## 🧪 So verwendest du die API
 
-Die Basis-URL ist **`https://api.sideren.io/v1`**; derselbe Schlüssel bedient auch das Anthropic-Protokoll unter `/v1/messages` (`x-api-key`).
+Die Basis-URL ist **`https://api.sideren.io/v1`**; derselbe Schlüssel beantwortet auch das Anthropic-Protokoll unter `/v1/messages` (`x-api-key`).
 
 **OpenAI-Protokoll**
 
@@ -113,17 +115,17 @@ node src/launcher.js            # interactive: mint / verify / settings / help
 node src/cli.js --count 30      # any N — 30 is just the default sample
 ```
 
-Die Tools lesen `proxies.txt` aus dem **Repository-Stammverzeichnis** und schreiben `keys.txt`, `accounts.json` und `outputs/` ebenfalls dorthin. `keys.txt` (gespiegelt nach `%USERPROFILE%\sideren-keys.txt`) wird **nur** geschrieben, nachdem ein Schlüssel auf `GET /v1/models`, `GET /v1/me` und eine echte Chat-Completion geantwortet hat.
+Die Tools lesen `proxies.txt` aus dem **Repository-Stammverzeichnis** und schreiben `keys.txt`, `accounts.json` und `outputs/` ebenfalls dorthin. `keys.txt` (gespiegelt nach `%USERPROFILE%\sideren-keys.txt`) wird **erst** geschrieben, nachdem ein Schlüssel `GET /v1/models`, `GET /v1/me` und eine echte Chat-Vervollständigung beantwortet hat.
 
 ### 🖱️ Der Launcher
 
-Der Launcher fragt nach Proxyliste und Anzahl, merkt sie sich in `launcher.config.json` und führt die CLI mit den richtigen Flags aus; `node src/launcher.js --connect-9router` registriert die erzeugten Schlüssel in einem lokalen 9Router.
+Der Launcher fragt nach der Proxy-Liste und der Anzahl, merkt sie sich in `launcher.config.json` und führt die CLI mit den richtigen Flags aus; `node src/launcher.js --connect-9router` registriert die erzeugten Schlüssel in einem lokalen 9Router.
 
 ## ✅ Verifiziert funktionierend — jeder Schlüssel wird getestet
 
 | Prüfung | Ergebnis |
 | --- | --- |
-| `POST /auth/v1/signup` | **30/30 → 200** mit Access-Token (Session sofort nutzbar) |
+| `POST /auth/v1/signup` | **30/30 → 200** mit einem Zugriffstoken (Sitzung sofort nutzbar) |
 | `POST /rest/v1/rpc/create_api_key` | **30/30 → 200** mit einem `lx1_…`-Schlüssel |
 | `GET /v1/models` + `GET /v1/me` | **30/30 → 200**, `plan: "free"`, `balance_usd: 2` pro Konto |
 | `POST /v1/chat/completions` (OpenAI-Protokoll) | **200** mit echtem Inhalt |
@@ -134,7 +136,7 @@ Der Launcher fragt nach Proxyliste und Anzahl, merkt sie sich in `launcher.confi
 node src/cli.js --verify-only    # models + balance + a chat call for every key
 ```
 
-## 🧭 So funktioniert's
+## 🧭 So funktioniert es
 
 ```
 inbox (one address per account)                                  a fresh address per account
@@ -147,10 +149,10 @@ inbox (one address per account)                                  a fresh address
 
 | Schritt | Aufruf | Hinweise |
 | --- | --- | --- |
-| Konto | `POST https://data.sideren.io/auth/v1/signup {email,password}` | das Identity-Backend antwortet sofort mit einer Session |
-| Schlüssel | `POST https://data.sideren.io/rest/v1/rpc/create_api_key {p_name}` (Bearer Access-Token) | dieselbe RPC, die das Panel aufruft; liefert `lx1_…` (Alias `sdn_…`) |
+| Konto | `POST https://data.sideren.io/auth/v1/signup {email,password}` | das Identitäts-Backend antwortet sofort mit einer Sitzung |
+| Schlüssel | `POST https://data.sideren.io/rest/v1/rpc/create_api_key {p_name}` (Bearer access token) | derselbe RPC, den das Panel aufruft; liefert `lx1_…` (Alias `sdn_…`) |
 | Guthaben | serverseitig bei der Registrierung gewährt | `GET https://api.sideren.io/v1/me` → `balance_usd: 2`, `plan: "free"` |
-| Verifizieren | `GET /v1/models`, `GET /v1/me`, `POST /v1/chat/completions` | ein Schlüssel wird erst in `keys.txt` geschrieben, wenn alle drei antworten |
+| Prüfen | `GET /v1/models`, `GET /v1/me`, `POST /v1/chat/completions` | ein Schlüssel wird erst in `keys.txt` geschrieben, nachdem alle drei geantwortet haben |
 
 ## ⚙️ CLI-Optionen
 
@@ -166,22 +168,22 @@ node src/cli.js --help
 | `SIDEREN_PROXIES` | `proxies.txt` | Pool-Datei, ein Proxy pro Zeile |
 | `PIN_PROXY` | — | einen einzelnen Egress für jeden Aufruf festlegen (z. B. `socks5://127.0.0.1:40000`) |
 
-Turbo ist zu empfehlen (5); mehr bedeutet Last-/Ban-Risiko auf schwachen Rechnern.
+Turbo wird empfohlen (5); mehr riskiert Last-/Ban-Risiko auf schwachen Rechnern.
 
 ## 🛰️ Hinter einem Proxy
 
-Der Provider-Traffic läuft über deinen Pool (oder einen festgelegten Proxy). Die Registrierung ist ein einzelner kurzer Aufruf, ein Exit muss also nur einen Round-Trip überstehen; die Verifizierung ist der längere Pfad und wählt einfach einen anderen Exit, wenn einer ausfällt.
+Der Provider-Verkehr läuft über deinen Pool (oder einen festgelegten Proxy). Die Registrierung ist ein einzelner kurzer Aufruf, daher muss ein Exit nur einen Round-Trip überstehen; der Verifizierungsdurchlauf ist der längere Pfad und wählt einfach einen anderen Exit, wenn einer ausfällt.
 
 ## 📄 Dateien
 
 | Pfad | Inhalt |
 | --- | --- |
 | `keys.txt` | ein verifizierter Schlüssel pro Zeile — von Git ignoriert, nie committet |
-| `accounts.json` | E-Mail / Passwort / User-ID / Schlüssel / Verifizierungseintrag pro Konto |
+| `accounts.json` | E-Mail / Passwort / Benutzer-ID / Schlüssel / Verifizierungsdatensatz pro Konto |
 | [`models.json`](src/models.json) | der aktuelle Katalog mit 134 Modellen |
 | `outputs/` | Ergebnisse des Verifizierungsdurchlaufs — von Git ignoriert |
 
-## 🔌 Verbindung mit 9Router
+## 🔌 Verbindung zu 9Router
 
 [9Router](https://9router.com) ist ein selbst gehosteter, OpenAI-kompatibler Router. Ein `openai-compatible`-Knoten für Sideren, eine Verbindung pro Schlüssel:
 
@@ -191,21 +193,21 @@ node src/connect-9router.js \
   --api-key <key>            # or env NINEROUTER_API_KEY
 ```
 
-Standardwerte: Basis `http://localhost:20128`, Passwort `123456`, Knoten `Sideren`, Präfix `sideren`, Upstream `https://api.sideren.io/v1`, Standardmodell `@sdn/llama-3.3-70b`. Registriere einen weiteren erzeugten Schlüssel mit `--name "<label 2>"` — jeder Schlüssel wird zu einer weiteren Verbindung, über die 9Router Lastverteilung betreiben kann. Modelle werden dann als `sideren/<model id>` bereitgestellt.
+Standardwerte: Basis `http://localhost:20128`, Passwort `123456`, Knoten `Sideren`, Präfix `sideren`, Upstream `https://api.sideren.io/v1`, Standardmodell `@sdn/llama-3.3-70b`. Registriere einen weiteren erzeugten Schlüssel mit `--name "<label 2>"` — jeder Schlüssel wird eine weitere Verbindung, über die 9Router lastverteilen kann. Modelle werden dann als `sideren/<model id>` bereitgestellt.
 
 ## 🔑 Was ein Schlüssel dir bringt
 
 | | |
 | --- | --- |
-| 🏢 Anbieter | **Sideren** — [sideren.io](https://sideren.io) · API-Doku unter [docs.layerx1.com](https://docs.layerx1.com) |
-| 🎁 Was der Anbieter gibt | kostenloses Guthaben von 2 $ pro Konto — zwei REST-Aufrufe pro Schlüssel, OpenAI- + Anthropic-Protokolle |
-| 🔑 Was ein Schlüssel dir bringt | ein API-Schlüssel, gebunden an sein eigenes Konto: die Modell-IDs am untenstehenden Endpunkt, im Rahmen der Grenzen deines Tarifs. Das Kontingent lebt auf dem **Konto**, genau deshalb erstellt dieses Tool ein Konto pro Schlüssel |
+| 🏢 Anbieter | **Sideren** — [sideren.io](https://sideren.io) · API-Dokumentation unter [docs.layerx1.com](https://docs.layerx1.com) |
+| 🎁 Was der Anbieter bietet | $2 kostenloses Guthaben pro Konto — zwei REST-Aufrufe pro Schlüssel, OpenAI- + Anthropic-Protokolle |
+| 🔑 Was ein Schlüssel dir bringt | ein API-Schlüssel, beschränkt auf sein eigenes Konto: die Modell-IDs am unten genannten Endpunkt, im Rahmen der Limits deines Plans. Das Kontingent liegt beim **Konto**, genau deshalb erstellt dieses Tool ein Konto pro Schlüssel |
 | 🌐 API-Form | OpenAI-kompatibel: `POST https://api.sideren.io/v1/chat/completions` |
-| 🔒 Deine Daten | kontaktiert werden nur `data.sideren.io` (Registrierung + Key-RPC) und `api.sideren.io` (Inferenz); Schlüssel bleiben auf deinem Rechner |
+| 🔒 Deine Daten | Es werden nur `data.sideren.io` (Registrierung + Schlüssel-RPC) und `api.sideren.io` (Inferenz) kontaktiert; Schlüssel bleiben auf deinem Rechner |
 
 ## 🐞 Probleme
 
-Wenn Sideren sein Identity-Backend ändert (Registrierungseinstellungen, RPC-Name, Schlüsselpräfix), stoppt das Tool an diesem Schritt und sagt es dir. **[Eröffne ein Issue](../../issues)** mit dem ausgeführten Befehl und der exakten Ausgabe; PRs sind willkommen.
+Wenn Sideren sein Identitäts-Backend ändert (Registrierungseinstellungen, RPC-Name, Schlüsselpräfix), stoppt das Tool an diesem Schritt und sagt es. **[Ein Issue öffnen](../../issues)** mit dem ausgeführten Befehl und der exakten Ausgabe; PRs sind willkommen.
 
 ## 📄 Lizenz
 
@@ -213,6 +215,6 @@ MIT © 2026 — siehe [LICENSE](LICENSE).
 
 <div align="center">
 
-**[MIT](LICENSE)** © 2026 sideren-bulk-apikey contributors
+**[MIT](LICENSE)** © 2026 Mitwirkende von sideren-bulk-apikey
 
 </div>
