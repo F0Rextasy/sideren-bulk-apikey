@@ -10,7 +10,9 @@
  *
  * Persists: keys.txt (one per line), accounts.json, mirror %USERPROFILE%\sideren-keys.txt,
  * outputs/batch-<tag>.jsonl (events), outputs/batch-<tag>.summary.md.
- * Exits: warm pool -> union pool -> WARP SOCKS last resort. Never the direct line.
+ * Exits: warm pool -> union pool -> WARP SOCKS last resort. A pool is optional:
+ * with none (no pool files, no `proxies.txt`, no $SIDEREN_PROXIES) the tool
+ * connects directly.
  */
 const fs = require('fs');
 const os = require('os');
@@ -81,7 +83,9 @@ function pool() {
     path.join(PL, 'sideren-live.txt'),
     path.join(PL, 'router-siderenapi-live.txt'),
     path.join(PL, 'union-live.txt'),
-  ].filter((f) => fs.existsSync(f));
+    path.join(PL, 'proxies.txt'),
+    process.env.SIDEREN_PROXIES,
+  ].filter((f) => f && fs.existsSync(f));
   const lines = [];
   for (const f of files) for (const l of fs.readFileSync(f, 'utf8').split(/\r?\n/)) {
     const c = l.split(/\s+#/)[0].trim();
@@ -91,6 +95,12 @@ function pool() {
     lines.push(c);
   }
   const uniq = [...new Set(lines)].map((l) => parseProxy(l)).filter(Boolean);
+  if (!uniq.length) {
+    // No pool = DIRECT mode: a proxy is recommended at scale (per-IP limits,
+    // bans) but the tool works without one. `null` is the direct sentinel.
+    console.log('no proxy list found — running WITHOUT a proxy (direct). Put exits in proxies.txt (or set SIDEREN_PROXIES) to route through them.');
+    return [null];
+  }
   if (!process.env.NO_WARP) {
     const warp = parseProxy('socks5://127.0.0.1:40000');
     if (warp) uniq.push(warp);
@@ -98,12 +108,16 @@ function pool() {
   return uniq;
 }
 let EXITS = pool();
+/** Run-header truth: in direct mode the "pool" is the single `null` sentinel. */
+const POOL_DESC = EXITS.some(Boolean) ? `pool ${EXITS.length} ${EXITS.length === 1 ? 'exit' : 'exits'}` : 'direct (no proxy list)';
 function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 /** Order for attempts: WARP first for 1-2-exit requests (it is the reliable one);
- *  for larger requests: a few random pool exits, then WARP, then the rest. */
+ *  for larger requests: a few random pool exits, then WARP, then the rest.
+ *  Direct mode hands out the single `null` slot instead. */
 function pickExits(n) {
-  const warp = EXITS.filter((p) => p.host === '127.0.0.1');
-  const rest = shuffle(EXITS.filter((p) => p.host !== '127.0.0.1'));
+  if (!EXITS.some(Boolean)) return [null];
+  const warp = EXITS.filter((p) => p && p.host === '127.0.0.1');
+  const rest = shuffle(EXITS.filter((p) => p && p.host !== '127.0.0.1'));
   if (n <= 2) return [...warp, ...rest.slice(0, n)];
   const head = rest.slice(0, Math.max(1, n - warp.length - 2));
   const tailN = Math.max(0, n - head.length - warp.length);
@@ -166,11 +180,12 @@ async function verifyKey(key) {
       const cj = JSON.parse(chat.text || '{}');
       out.snippet = (cj.choices && cj.choices[0] && cj.choices[0].message && cj.choices[0].message.content) || '';
       out.chatOk = chat.status === 200 && typeof out.snippet === 'string' && out.snippet.trim().length > 0;
-      out.exit = `${pr.host}:${pr.port}`;
+      out.exit = pr ? `${pr.host}:${pr.port}` : 'direct';
       if (out.modelsStatus === 200 && out.chatOk) return out;
     } catch (e) {
-      out.lastErr = `${pr.host}:${pr.port} ${e.code || String(e.message).slice(0, 50)}`;
-      out.exit = `${pr.host}:${pr.port}`;
+      const at = pr ? `${pr.host}:${pr.port}` : 'direct';
+      out.lastErr = `${at} ${e.code || String(e.message).slice(0, 50)}`;
+      out.exit = at;
     }
     await sleep(1500 + a * 1000);
   }
@@ -198,7 +213,7 @@ async function mintOne(n) {
     try {
       const r = await req(SUPA + '/auth/v1/signup', { method: 'POST', body: { email, password, data: {} }, tries: 8 });
       su = JSON.parse(r.text || '{}');
-      ev({ n, tag: 'signup', status: r.status, exit: `${r.proxy.host}:${r.proxy.port}`, user: su.user && su.user.id, ms: Date.now() - t0 });
+      ev({ n, tag: 'signup', status: r.status, exit: r.proxy ? `${r.proxy.host}:${r.proxy.port}` : 'direct', user: su.user && su.user.id, ms: Date.now() - t0 });
       if (r.status === 429 || su.error_code === 'over_email_send_rate_limit') { await sleep(15000); continue; }
       if ((r.status === 400 || r.status === 422) && /already registered|already exists/i.test(r.text || '')) {
         // signup landed on an earlier attempt but the response was lost: log in instead
@@ -223,7 +238,7 @@ async function mintOne(n) {
     try {
       const r = await req(SUPA + '/rest/v1/rpc/create_api_key', { method: 'POST', body: { p_name: `agent-${TAG}-${n}` }, token: su.access_token, tries: 8 });
       const j = JSON.parse(r.text || '{}');
-      ev({ n, tag: 'rpc', status: r.status, exit: `${r.proxy.host}:${r.proxy.port}`, id: j.id, key4: j.last4 });
+      ev({ n, tag: 'rpc', status: r.status, exit: r.proxy ? `${r.proxy.host}:${r.proxy.port}` : 'direct', id: j.id, key4: j.last4 });
       if (r.status === 200 && typeof j.key === 'string' && /^(sdn_|lx1_)/.test(j.key)) { key = j.key; break; }
       throw new Error(`rpc ${r.status}: ${(r.text || '').slice(0, 120)}`);
     } catch (e) {
@@ -265,8 +280,8 @@ async function mintOne(n) {
 // -------------------------------------------------------------------- main
 
 (async () => {
-  log(`batch ${TAG}: target ${COUNT} accounts · conc ${CONC} · pool ${EXITS.length} exits`);
-  ev({ tag: 'start', count: COUNT, conc: CONC, pool: EXITS.length });
+  log(`batch ${TAG}: target ${COUNT} accounts · conc ${CONC} · ${POOL_DESC}`);
+  ev({ tag: 'start', count: COUNT, conc: CONC, pool: EXITS.filter(Boolean).length });
   let done = 0;
   let idx = 0;
   const results = [];
@@ -275,7 +290,7 @@ async function mintOne(n) {
     for (;;) {
       const n = idx++;
       if (n >= COUNT) return;
-      console.log(`… #${n + 1} başladı (pool ${EXITS.length} ${EXITS.length === 1 ? 'exit' : 'exits'})`);
+      console.log(`… #${n + 1} başladı (${POOL_DESC})`);
       try {
         const { record, verify } = await mintOne(n + 1);
         done++;

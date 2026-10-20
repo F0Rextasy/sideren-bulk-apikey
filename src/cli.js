@@ -20,10 +20,11 @@
  *   node src/cli.js --connect-9router --api-key <key>   register the provider node + key with a local 9Router
  *   node src/cli.js --help
  *
- * Egress: provider traffic goes through your proxy list (proxies.txt next to the
- * repo, or $SIDEREN_PROXIES); a WARP SOCKS endpoint can be pinned with
- * PIN_PROXY=socks5://127.0.0.1:40000. The tool never dials the open internet
- * without a proxy unless you explicitly pass --allow-direct.
+ * Egress: provider traffic goes through your proxy list (`proxies.txt` next to
+ * the repo, the warm-pool files, or $SIDEREN_PROXIES) — OPTIONAL: with a pool,
+ * every request exits through it and a dead exit fails that attempt instead of
+ * silently falling back to the direct line; with no pool the tool connects
+ * directly. A single egress can be pinned with PIN_PROXY=socks5://127.0.0.1:40000.
  */
 const path = require('path');
 const { spawnSync } = require('child_process');
@@ -33,6 +34,8 @@ const arg = (name, fallback) => { const i = args.indexOf(name); return i === -1 
 
 if (args.includes('--help') || args.includes('-h')) {
   console.log(require('fs').readFileSync(path.join(__dirname, '..', 'README.md'), 'utf8').split('## ⚙️')[1] || 'see README.md');
+  console.log('Requests go through your proxy list when one is provided (SIDEREN_PROXIES / proxies.txt).');
+  console.log('Without a pool the tool connects directly.');
   process.exit(0);
 }
 

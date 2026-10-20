@@ -109,8 +109,9 @@ curl https://api.sideren.io/v1/messages \
 git clone https://github.com/F0Rextasy/sideren-bulk-apikey.git
 cd sideren-bulk-apikey
 
-# 1) your proxy list, one per line (http://, socks5://, socks4:// or bare host:port)
+# 1) optional: your proxy list, one per line (http://, socks5://, socks4:// or bare host:port)
 printf 'socks5://127.0.0.1:1080\n' > proxies.txt
+#    (skip this — without a pool the tool connects directly)
 
 # 2) go
 node src/launcher.js            # interactive: mint / verify / settings / help
@@ -168,14 +169,19 @@ node src/cli.js --help
 
 | Environment variable | Default | Meaning |
 | --- | --- | --- |
-| `SIDEREN_PROXIES` | `proxies.txt` | pool file, one proxy per line |
+| `SIDEREN_PROXIES` | `proxies.txt` | exit pool, one proxy per line [optional] — without one the tool connects directly |
 | `PIN_PROXY` | — | pin a single egress for every call (e.g. `socks5://127.0.0.1:40000`) |
 
 Turbo önerilir (5); daha fazlası zayıf bilgisayarda yük/ban riski.
 
 ## 🛰️ Behind a proxy
 
-Provider traffic goes through your pool (or a pinned proxy). Signup is a single short call, so an exit only has to survive one round-trip; the verification pass is the longer path and simply re-picks another exit when one dies.
+**Optional — recommended at scale (per-IP limits, bans).** The tool works without a proxy too.
+
+- **With a pool:** put your exits in `proxies.txt` (or set `SIDEREN_PROXIES`, or fill the warm-pool files under `outputs/`) and every request goes through an exit from that list — a dead line fails that attempt and the tool moves to the next one (fail-closed while a pool is provided).
+- **Without a pool:** the tool prints `running WITHOUT a proxy (direct)` and connects directly. Nothing about sign-up, key minting or verification changes — only where the packets leave from.
+
+With a pool, signup is a single short call, so an exit only has to survive one round-trip; the verification pass is the longer path and simply re-picks another exit when one dies.
 
 ## 📄 Files
 
@@ -183,6 +189,7 @@ Provider traffic goes through your pool (or a pinned proxy). Signup is a single 
 | --- | --- |
 | `keys.txt` | one verified key per line — git-ignored, never committed |
 | `accounts.json` | e-mail / password / user id / key / verification record per account |
+| `proxies.txt` | your exit pool, one proxy per line — git-ignored |
 | [`models.json`](src/models.json) | the live 134-model catalogue |
 | `outputs/` | verification sweep results — git-ignored |
 

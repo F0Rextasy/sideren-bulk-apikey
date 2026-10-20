@@ -40,6 +40,12 @@ function pool() {
     if (c && !c.startsWith('#')) lines.push(c);
   }
   const arr = [...new Set(lines)].map((l) => parseProxy(l)).filter(Boolean);
+  if (!arr.length) {
+    // No pool = DIRECT mode: a proxy is recommended at scale (per-IP limits,
+    // bans) but the tool works without one. `null` is the direct sentinel.
+    console.log('no proxy list found — running WITHOUT a proxy (direct). Put exits in proxies.txt (or set SIDEREN_PROXIES) to route through them.');
+    return [null];
+  }
   // WARP SOCKS last-resort egress (shared exit; fine for a single account run)
   const warp = parseProxy('socks5://127.0.0.1:40000');
   if (warp) arr.push(warp);
@@ -130,7 +136,7 @@ function sessionCookieValue(session) {
   const text = res.text || '';
   let json = null;
   try { json = JSON.parse(text); } catch (e) { /* keep null */ }
-  console.log('signup', res.status, 'exit', proxy.host + ':' + proxy.port);
+  console.log('signup', res.status, 'exit', proxy ? proxy.host + ':' + proxy.port : 'direct');
   if (!json || !json.access_token) {
     console.log('body:', text.slice(0, 400));
     console.log('FAILED');
@@ -138,7 +144,7 @@ function sessionCookieValue(session) {
   }
   const record = {
     email, password, mailbox, at: new Date().toISOString(),
-    exit: `${proxy.protocol}//${proxy.host}:${proxy.port}`,
+    exit: proxy ? `${proxy.protocol}//${proxy.host}:${proxy.port}` : 'direct',
     user_id: json.user && json.user.id,
     access_token: json.access_token,
     refresh_token: json.refresh_token,
