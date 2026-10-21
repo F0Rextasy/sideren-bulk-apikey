@@ -3,7 +3,7 @@
 /**
  * Final verification sweep over keys.txt:
  *   for each key: GET /v1/models (200) + GET /v1/me (balance) + chat @sdn/llama-3.3-70b (content)
- * Exits: pool + WARP fallback; with no pool the tool connects directly. Results
+ * Exits: pool + proxy fallback; with no pool the tool connects directly. Results
  * to outputs/verification.json and accounts.json.
  *
  *   node src/verify.js [keysFile]

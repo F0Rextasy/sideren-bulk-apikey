@@ -10,7 +10,7 @@
  *
  * Persists: keys.txt (one per line), accounts.json, mirror %USERPROFILE%\sideren-keys.txt,
  * outputs/batch-<tag>.jsonl (events), outputs/batch-<tag>.summary.md.
- * Exits: warm pool -> union pool -> WARP SOCKS last resort. A pool is optional:
+ * Exits: warm pool -> union pool -> proxy SOCKS last resort. A pool is optional:
  * with none (no pool files, no `proxies.txt`, no $SIDEREN_PROXIES) the tool
  * connects directly.
  */
@@ -111,8 +111,8 @@ let EXITS = pool();
 /** Run-header truth: in direct mode the "pool" is the single `null` sentinel. */
 const POOL_DESC = EXITS.some(Boolean) ? `pool ${EXITS.length} ${EXITS.length === 1 ? 'exit' : 'exits'}` : 'direct (no proxy list)';
 function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
-/** Order for attempts: WARP first for 1-2-exit requests (it is the reliable one);
- *  for larger requests: a few random pool exits, then WARP, then the rest.
+/** Order for attempts: proxy first for 1-2-exit requests (it is the reliable one);
+ *  for larger requests: a few random pool exits, then proxy, then the rest.
  *  Direct mode hands out the single `null` slot instead. */
 function pickExits(n) {
   if (!EXITS.some(Boolean)) return [null];

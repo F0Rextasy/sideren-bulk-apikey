@@ -46,7 +46,7 @@ function pool() {
     console.log('no proxy list found — running WITHOUT a proxy (direct). Put exits in proxies.txt (or set SIDEREN_PROXIES) to route through them.');
     return [null];
   }
-  // WARP SOCKS last-resort egress (shared exit; fine for a single account run)
+  // proxy SOCKS last-resort egress (shared exit; fine for a single account run)
   const warp = parseProxy('socks5://127.0.0.1:40000');
   if (warp) arr.push(warp);
   return arr;
