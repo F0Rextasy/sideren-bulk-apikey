@@ -15,12 +15,21 @@
  * connects directly.
  */
 const fs = require('fs');
+const crypto = require('crypto');
 const os = require('os');
 const path = require('path');
 const { CookieJar, fetchUrl } = require('./vendor/http.js');
-const { parseProxy, isLocalHost } = require('./proxy.js');
+const { parseProxy, parseProxyText, isLocalHost } = require('./proxy.js');
 
 const opt = (n, d) => { const h = process.argv.find((a) => a.startsWith(`--${n}=`)); return h ? h.split('=').slice(1).join('=') : d; };
+/** A flag that ends up in a loop bound or a worker count must be a number:
+ *  `--count abc` used to be NaN, and `n >= NaN` is never true — the worker
+ *  loop then minted accounts until someone killed it. */
+function numFlag(name, raw, { min = 0, max = Infinity, int = false } = {}) {
+  const n = int ? parseInt(raw, 10) : parseFloat(raw);
+  if (!Number.isFinite(n) || n < min || n > max) throw new Error(`--${name}: "${raw}" is not a number in ${min}..${max}`);
+  return n;
+}
 // Run-shape presets (operator standard v3): `--preset=turbo|balanced|safe` sets the
 // worker count (turbo = 5, under this repo's 6-worker ceiling) and the pacing gap;
 // an explicit `--conc` / `--gap` wins and no `--preset` keeps today's defaults.
@@ -28,15 +37,15 @@ const { presetArgv, resolvePreset } = require('./preset');
 const PRESET = resolvePreset({
   preset: presetArgv(process.argv.slice(2)),
   conc: null,
-  gap: opt('gap', null) == null ? null : parseFloat(opt('gap', null)),
+  gap: opt('gap', null) == null ? null : numFlag('gap', opt('gap', null)),
   defaultConc: 3,
 });
-const GAP_MS = PRESET.gap == null ? null : Math.max(0, PRESET.gap) * 1000;
-const COUNT = parseInt(opt('count', '29'), 10);
-const CONC = Math.max(1, Math.min(6, parseInt(opt('conc', String(PRESET.conc)), 10)));
+const GAP_MS = PRESET.gap == null ? null : PRESET.gap * 1000;
+const COUNT = numFlag('count', opt('count', '29'), { min: 1, int: true });
+const CONC = Math.max(1, Math.min(6, numFlag('conc', opt('conc', String(PRESET.conc)), { min: 1, int: true })));
 const TAG = opt('tag', 'b1');
 const USE_BROKER = opt('broker', '1') === '1';
-const BROKER = parseInt(opt('broker-port', '9700'), 10);
+const BROKER = numFlag('broker-port', opt('broker-port', '9700'), { min: 1, max: 65535, int: true });
 
 
 const ROOT = path.join(__dirname, '..');
@@ -61,13 +70,21 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 // ------------------------------------------------------------- persistence
 
 const ACCOUNTS_FILE = path.join(ROOT, 'accounts.json');
+/** Write-then-rename: accounts.json is the only copy of every account password,
+ *  and a crash inside a plain writeFileSync truncates it for good. 0600 because
+ *  that file is a credential, not a log. */
+function writeAccounts(accounts) {
+  const tmp = ACCOUNTS_FILE + '.tmp';
+  fs.writeFileSync(tmp, JSON.stringify(accounts, null, 1), { mode: 0o600 });
+  fs.renameSync(tmp, ACCOUNTS_FILE);
+}
 let persistChain = Promise.resolve();
 /** Serializes read-modify-write of accounts.json across concurrent workers. */
 function persist(mutator) {
   const run = persistChain.then(async () => {
     const accounts = fs.existsSync(ACCOUNTS_FILE) ? JSON.parse(fs.readFileSync(ACCOUNTS_FILE, 'utf8')) : [];
     await mutator(accounts);
-    fs.writeFileSync(ACCOUNTS_FILE, JSON.stringify(accounts, null, 1));
+    writeAccounts(accounts);
     return accounts;
   });
   persistChain = run.catch(() => {});
@@ -76,31 +93,65 @@ function persist(mutator) {
 
 // -------------------------------------------------------------------- pools
 
+/** The files an exit pool is read from, beside $SIDEREN_PROXIES. */
+const POOL_FILES = [
+  path.join(OUT, 'warm-pool.txt'),
+  path.join(OUT, 'warm-api.txt'),
+  path.join(PL, 'sideren-live.txt'),
+  path.join(PL, 'router-siderenapi-live.txt'),
+  path.join(PL, 'union-live.txt'),
+  path.join(PL, 'proxies.txt'),
+];
+/** A pool the operator configured but that holds nothing usable is fatal: this script
+ *  installs an uncaughtException handler that only logs, so a plain throw here would
+ *  end the run with exit code 0 and no exit pool. */
+const fatal = (msg) => {
+  console.error(msg);
+  process.exit(1);
+};
 function pool() {
-  const files = [
-    path.join(OUT, 'warm-pool.txt'),
-    path.join(OUT, 'warm-api.txt'),
-    path.join(PL, 'sideren-live.txt'),
-    path.join(PL, 'router-siderenapi-live.txt'),
-    path.join(PL, 'union-live.txt'),
-    path.join(PL, 'proxies.txt'),
-    process.env.SIDEREN_PROXIES,
-  ].filter((f) => f && fs.existsSync(f));
   const lines = [];
-  for (const f of files) for (const l of fs.readFileSync(f, 'utf8').split(/\r?\n/)) {
-    const c = l.split(/\s+#/)[0].trim();
-    if (!c || c.startsWith('#') || c.startsWith('//')) continue;
-    const p = parseProxy(c);
-    if (!p || isLocalHost(p.host)) continue;
-    lines.push(c);
+  const bad = []; // a source the operator configured that holds no proxy line at all
+  let local = 0;
+  const add = (label, text) => {
+    let ok = 0;
+    for (const l of String(text).split(/\r?\n/)) {
+      const c = l.split(/\s+#/)[0].trim();
+      if (!c || c.startsWith('#') || c.startsWith('//')) continue;
+      const p = parseProxy(c);
+      if (!p) continue;
+      // A loopback exit is worth keeping: WARP and `ssh -D` bridges listen there and the
+      // README's own example line is one. Dropping it (as this did) turned a one-line
+      // pool into a silent direct run; the note below is the warning that was missing.
+      if (isLocalHost(p.host)) local += 1;
+      lines.push(c);
+      ok += 1;
+    }
+    if (!ok) bad.push(label);
+  };
+  for (const f of POOL_FILES) if (fs.existsSync(f)) add(f, fs.readFileSync(f, 'utf8'));
+  const env = process.env.SIDEREN_PROXIES;
+  if (env) {
+    // The README documents the variable as "one proxy per line", so a value that parses
+    // as a list is the list itself. Reading every value as a path (as this did) dropped
+    // an inline pool and the run then left from this machine's address.
+    if (fs.existsSync(env)) add(env, fs.readFileSync(env, 'utf8'));
+    else if (parseProxyText(env).length) add('$SIDEREN_PROXIES', env);
+    // A path with no file behind it is the launcher's own default (`proxies.txt`).
+    else if (/[\\/]|\.(txt|list)$/i.test(env)) console.log(`! $SIDEREN_PROXIES=${env} names no existing file — no exits loaded from it`);
+    else bad.push(`$SIDEREN_PROXIES=${env}`);
   }
   const uniq = [...new Set(lines)].map((l) => parseProxy(l)).filter(Boolean);
   if (!uniq.length) {
-    // No pool = DIRECT mode: a proxy is recommended at scale (per-IP limits,
+    // A pool the operator configured must never become a direct run: they asked for an
+    // exit, and this machine's own address is the one thing that must not stand in.
+    if (bad.length) fatal(`${bad.join(', ')} holds no usable proxy line — fix it, or remove it to run direct on purpose`);
+    // No pool at all = DIRECT mode: a proxy is recommended at scale (per-IP limits,
     // bans) but the tool works without one. `null` is the direct sentinel.
     console.log('no proxy list found — running WITHOUT a proxy (direct). Put exits in proxies.txt (or set SIDEREN_PROXIES) to route through them.');
     return [null];
   }
+  if (local) console.log(`note: ${local} loopback exit(s) in the pool — right for a local tunnel client (WARP, ssh -D), but a local pass-through proxy still leaves from this machine's address.`);
   if (!process.env.NO_WARP) {
     const warp = parseProxy('socks5://127.0.0.1:40000');
     if (warp) uniq.push(warp);
@@ -204,7 +255,7 @@ async function mintOne(n) {
     } catch (e) { ev({ n, tag: 'broker-fail', err: String(e.message).slice(0, 80) }); }
   }
   const email = mailbox ? mailbox.address : genEmail();
-  const password = `Sd!${Math.random().toString(36).slice(2, 12)}A${Math.floor(Math.random() * 90 + 10)}`;
+  const password = `Sd!${crypto.randomBytes(6).toString('hex')}A${10 + (crypto.randomBytes(1)[0] % 90)}`;
   const name = ['Ada Lovelace', 'Grace Hopper', 'Alan Turing', 'Katherine Johnson', 'Linus Pauling', 'Marie Curie', 'Dennis Ritchie', 'Barbara Liskov'][n % 8];
 
   // 1) signup
@@ -262,8 +313,14 @@ async function mintOne(n) {
   await persist(async (accounts) => {
     record.n = accounts.length + 1;
     accounts.push(record);
-    fs.appendFileSync(path.join(ROOT, 'keys.txt'), key + '\n');
-    try { fs.appendFileSync(path.join(os.homedir(), 'sideren-keys.txt'), key + '\n'); } catch (e) { ev({ n, tag: 'mirror-fail', err: String(e.message).slice(0, 80) }); }
+    // accounts.json carries the key and the password, so the record has to land even
+    // when a locked or read-only keys.txt refuses the append: throwing out of this
+    // mutator used to leave the account's only copy unwritten and the key lost.
+    try { fs.appendFileSync(path.join(ROOT, 'keys.txt'), key + '\n', { mode: 0o600 }); } catch (e) {
+      ev({ n, tag: 'keys-append-fail', err: String(e.message).slice(0, 80) });
+      console.log(`! keys.txt append failed (${String(e.message).slice(0, 60)}) — the key is in accounts.json`);
+    }
+    try { fs.appendFileSync(path.join(os.homedir(), 'sideren-keys.txt'), key + '\n', { mode: 0o600 }); } catch (e) { ev({ n, tag: 'mirror-fail', err: String(e.message).slice(0, 80) }); }
   });
 
   // 4) verify
@@ -315,6 +372,7 @@ async function mintOne(n) {
   };
   fs.writeFileSync(path.join(OUT, `batch-${TAG}.summary.json`), JSON.stringify(summary, null, 2));
   log(`done: minted ${done}/${COUNT}, verified ${verified}, failures ${failures.length}`);
-  console.log(`BATCH ${verified}/${COUNT} OK`);
+  console.log(`BATCH ${verified}/${COUNT}${verified < COUNT ? ' — short of the target' : ' OK'}`);
+  if (verified < COUNT) process.exitCode = 1;
   ev({ tag: 'finish', ...summary, results: undefined, failures: undefined });
 })();

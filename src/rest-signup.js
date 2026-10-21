@@ -10,15 +10,20 @@
  *   node src/rest-signup.js auto            # creates a mailbox via broker 9700
  */
 const fs = require('fs');
+const crypto = require('crypto');
 const os = require('os');
 const path = require('path');
 const { CookieJar, fetchUrl } = require('./vendor/http.js');
-const { parseProxy } = require('./proxy.js');
+const { parseProxy, parseProxyText } = require('./proxy.js');
 
 const SUPA = 'https://data.sideren.io';
 const ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlwcXFzenJtY3h5Ymp1b2J0Zmx2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI0NzE5MzMsImV4cCI6MjA5ODA0NzkzM30.25uc5g50oqfBqmQmKocMDIukfQ8mKLvJlzesP-vRxyY';
-const POOL = process.env.SIDEREN_PROXIES || path.join(__dirname, '..', 'proxies.txt');
+const POOL_FILES = [path.join(__dirname, '..', 'outputs', 'warm-pool.txt'), path.join(__dirname, '..', 'outputs', 'warm-api.txt'), path.join(__dirname, '..', 'proxies.txt')];
 const OUT = path.join(__dirname, '..', 'outputs');
+// A pinned egress that does not parse must stop the run here: falling back to
+// the direct line would send a request from this machine wearing the pin's name.
+const PIN = process.env.PIN_PROXY ? parseProxy(process.env.PIN_PROXY) : null;
+if (process.env.PIN_PROXY && !PIN) throw new Error(`PIN_PROXY is not a proxy line: ${process.env.PIN_PROXY}`);
 
 process.on('unhandledRejection', (e) => console.log('[unhandled]', String((e && e.message) || e).slice(0, 100)));
 process.on('uncaughtException', (e) => console.log('[uncaught]', String((e && e.message) || e).slice(0, 100)));
@@ -26,21 +31,40 @@ process.on('uncaughtException', (e) => console.log('[uncaught]', String((e && e.
 /** The ssr cookie name the app's createBrowserClient uses. */
 const COOKIE_NAME = 'sb-ypqqszrmcxybjuobtflv-auth-token';
 
+/** A configured pool that holds nothing usable is fatal: the uncaughtException handler
+ *  below only logs, so a plain throw would end the run with exit code 0. */
+const fatal = (msg) => {
+  console.error(msg);
+  process.exit(1);
+};
 function pool() {
-  const files = [
-    path.join(OUT, 'warm-pool.txt'),
-    path.join(OUT, 'warm-api.txt'),
-    path.join(__dirname, '..', 'proxies.txt'),
-    path.join(__dirname, '..', 'proxies.txt'),
-    POOL,
-  ].filter((f) => fs.existsSync(f));
   const lines = [];
-  for (const f of files) for (const l of fs.readFileSync(f, 'utf8').split(/\r?\n/)) {
-    const c = l.split(/\s+#/)[0].trim();
-    if (c && !c.startsWith('#')) lines.push(c);
+  const bad = []; // a source the operator configured that holds no proxy line at all
+  const add = (label, text) => {
+    let ok = 0;
+    for (const l of String(text).split(/\r?\n/)) {
+      const c = l.split(/\s+#/)[0].trim();
+      if (!c || c.startsWith('#')) continue;
+      if (!parseProxy(c)) continue;
+      lines.push(c);
+      ok += 1;
+    }
+    if (!ok) bad.push(label);
+  };
+  for (const f of POOL_FILES) if (fs.existsSync(f)) add(f, fs.readFileSync(f, 'utf8'));
+  const env = process.env.SIDEREN_PROXIES;
+  if (env) {
+    // "one proxy per line" (README): a value that parses as a list is the list itself,
+    // and reading every value as a path (as this did) dropped an inline pool in silence.
+    if (fs.existsSync(env)) add(env, fs.readFileSync(env, 'utf8'));
+    else if (parseProxyText(env).length) add('$SIDEREN_PROXIES', env);
+    else if (/[\\/]|\.(txt|list)$/i.test(env)) console.log(`! $SIDEREN_PROXIES=${env} names no existing file — no exits loaded from it`);
+    else bad.push(`$SIDEREN_PROXIES=${env}`);
   }
   const arr = [...new Set(lines)].map((l) => parseProxy(l)).filter(Boolean);
   if (!arr.length) {
+    // A pool the operator configured must not become a direct run.
+    if (bad.length) fatal(`${bad.join(', ')} holds no usable proxy line — fix it, or remove it to run direct on purpose`);
     // No pool = DIRECT mode: a proxy is recommended at scale (per-IP limits,
     // bans) but the tool works without one. `null` is the direct sentinel.
     console.log('no proxy list found — running WITHOUT a proxy (direct). Put exits in proxies.txt (or set SIDEREN_PROXIES) to route through them.');
@@ -53,7 +77,7 @@ function pool() {
 }
 
 async function viaProxy(url, opts = {}) {
-  const lines = process.env.PIN_PROXY ? [parseProxy(process.env.PIN_PROXY)] : pool();
+  const lines = PIN ? [PIN] : pool();
   let last = null;
   for (let i = 0; i < Math.min(lines.length, 16); i++) {
     const pr = lines[(Date.now() + i * 23) % lines.length];
@@ -119,6 +143,10 @@ function sessionCookieValue(session) {
   if (!emailArg) { console.log('usage: node src/rest-signup.js <email|auto> [password] [--out=file]'); process.exit(1); }
   const outHit = process.argv.find((a) => a.startsWith('--out='));
   const outFile = outHit ? outHit.split('=')[1] : path.join(OUT, `account-${Date.now()}.json`);
+  // The record below is the only copy of this account's password and tokens, and on a
+  // fresh clone outputs/ does not exist yet: make the directory before the signup, so
+  // an ENOENT can never land after the account already exists.
+  fs.mkdirSync(path.dirname(outFile), { recursive: true });
 
   let email = emailArg;
   let mailbox = null;
@@ -126,7 +154,7 @@ function sessionCookieValue(session) {
     mailbox = await brokerCreate();
     email = mailbox.address;
   }
-  const password = process.argv[3] && !process.argv[3].startsWith('--') ? process.argv[3] : `Sd!${Math.random().toString(36).slice(2, 10)}A7`;
+  const password = process.argv[3] && !process.argv[3].startsWith('--') ? process.argv[3] : `Sd!${crypto.randomBytes(8).toString('hex')}A7`;
 
   const { res, proxy } = await viaProxy(SUPA + '/auth/v1/signup', {
     method: 'POST',
@@ -157,7 +185,14 @@ function sessionCookieValue(session) {
     cookieChunks: chunkCookie(COOKIE_NAME, sessionCookieValue(json)).map((c) => c.name),
   };
   record.cookies = chunkCookie(COOKIE_NAME, sessionCookieValue(json));
-  fs.writeFileSync(outFile, JSON.stringify(record, null, 1));
+  try {
+    fs.writeFileSync(outFile, JSON.stringify(record, null, 1), { mode: 0o600 });
+  } catch (e) {
+    // Never lose the account: print what could not be written and fail loudly.
+    console.error(`could not write ${outFile}: ${e.message} — the record follows`);
+    console.log(JSON.stringify(record));
+    process.exit(1);
+  }
   try { fs.appendFileSync(path.join(OUT, 'rest-signups.jsonl'), JSON.stringify({ at: record.at, email, user_id: record.user_id, outFile }) + '\n'); } catch (e) {}
   console.log('user', record.user_id);
   console.log('cookies', record.cookies.map((c) => `${c.name}(${c.value.length})`).join(' '));

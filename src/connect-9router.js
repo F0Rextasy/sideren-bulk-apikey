@@ -29,6 +29,11 @@
  */
 
 const UA = 'sideren-bulk-apikey-9router-connector/1.0';
+// A 9Router that accepts the connection and then goes quiet must not hold the CLI:
+// undici's own backstop is five minutes per call, and the connector says nothing in
+// the meantime.
+const CALL_TIMEOUT_MS = 10000;
+const call = (url, init) => fetch(url, { ...init, signal: AbortSignal.timeout(CALL_TIMEOUT_MS) });
 
 const DEFAULTS = {
   base: 'http://localhost:20128',
@@ -40,18 +45,18 @@ const DEFAULTS = {
 };
 
 async function login9router(base, password) {
-  const res = await fetch(`${base}/api/auth/login`, {
+  const res = await call(`${base}/api/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'User-Agent': UA },
     body: JSON.stringify({ password: password ?? DEFAULTS.password }),
   });
-  const sc = typeof res.headers.getSetCookie === 'function' ? res.headers.getSetCookie() : [];
+  const sc = typeof res.headers.getSetCookie === 'function' ? res.headers.getSetCookie() : [res.headers.get('set-cookie')].filter(Boolean);
   const cookie = sc.map((c) => c.split(';')[0]).join('; ');
   return { ok: res.ok, cookie, body: (await res.text()).slice(0, 200) };
 }
 
 async function api(base, cookie, route, init = {}) {
-  const res = await fetch(`${base}${route}`, {
+  const res = await call(`${base}${route}`, {
     ...init,
     headers: {
       'Content-Type': 'application/json',
@@ -154,7 +159,10 @@ if (require.main === module) {
     defaultModel: args.model,
   }).catch((e) => {
     console.error('[fatal] ' + e.message);
-    process.exit(1);
+    // exitCode, not process.exit(): killing the process while undici is closing the
+    // connection it just used aborts with a libuv assertion on Windows, and the exit
+    // status becomes 0xC0000409 instead of 1 (measured). The loop drains on its own.
+    process.exitCode = 1;
   });
 }
 

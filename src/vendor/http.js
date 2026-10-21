@@ -134,7 +134,10 @@ function defaultPath(pathname) {
 const agents = new Map();
 
 function agentFor(proxy) {
-  const key = `${proxy.protocol}//${proxy.host}:${proxy.port}:${proxy.connectTimeoutMs || ''}:${proxy.timeoutMs || ''}`;
+  // Credentials are part of the identity: two pool lines that differ only in
+  // user/pass (a rotating gateway) must not share one tunnel, or the second
+  // account's traffic leaves under the first one's credentials.
+  const key = `${proxy.protocol}//${proxy.host}:${proxy.port}:${proxy.username || ''}:${proxy.password || ''}:${proxy.connectTimeoutMs || ''}:${proxy.timeoutMs || ''}`;
   let agent = agents.get(key);
   if (!agent) {
     agent = createAgent(proxy, { keepAlive: true, maxSockets: 4 });

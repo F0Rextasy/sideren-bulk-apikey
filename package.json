@@ -34,9 +34,11 @@
     "src/cli.js",
     "src/connect-9router.js",
     "src/launcher.js",
+    "src/preset.js",
     "src/proxy.js",
     "src/rest-signup.js",
     "src/verify.js",
+    "src/vendor/",
     "src/models.json",
     "README.md",
     "LICENSE"

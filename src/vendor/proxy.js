@@ -172,21 +172,24 @@ function connectHttpProxy(proxy, { host, port, timeoutMs = DEFAULT_TIMEOUT_MS })
     const fail = (err) => {
       if (settled) return;
       settled = true;
+      clearTimeout(timer); // a failed handshake must not keep the process alive
       socket.destroy();
       reject(err);
     };
     const timer = setTimeout(() => fail(new Error(`proxy CONNECT timeout (${label(proxy)})`)), timeoutMs);
-    socket.on('error', (e) => {
-      clearTimeout(timer);
-      fail(new Error(`proxy connect failed (${label(proxy)}): ${e.message}`));
-    });
+    socket.on('error', (e) => fail(new Error(`proxy connect failed (${label(proxy)}): ${e.message}`)));
     socket.setNoDelay(true);
 
     let buffer = Buffer.alloc(0);
     const onData = (chunk) => {
       buffer = Buffer.concat([buffer, chunk]);
       const end = buffer.indexOf('\r\n\r\n');
-      if (end === -1) return;
+      if (end === -1) {
+        // A proxy that streams garbage instead of a reply must not be allowed to
+        // grow this buffer until the process dies; 16 KiB is far past any header.
+        if (buffer.length > 16384) return fail(new Error(`proxy CONNECT header too large (${label(proxy)})`));
+        return;
+      }
       socket.removeListener('data', onData);
       clearTimeout(timer);
       const head = buffer.slice(0, end).toString('latin1');
@@ -230,6 +233,7 @@ function connectSocks5(proxy, { host, port, timeoutMs = DEFAULT_TIMEOUT_MS }) {
     const fail = (err) => {
       if (settled) return;
       settled = true;
+      clearTimeout(timer);
       socket.destroy();
       reject(err);
     };
@@ -270,6 +274,11 @@ function connectSocks5(proxy, { host, port, timeoutMs = DEFAULT_TIMEOUT_MS }) {
       if (buffer.length < 4) return;
       const rep = buffer[1];
       const atyp = buffer[3];
+      // The domain form carries its length in byte 5 (read as buffer[4] below):
+      // without it `7 + undefined` is NaN, `length < NaN` is false, and a 4-byte
+      // first chunk would resolve the tunnel with the reply itself as the first
+      // payload bytes.
+      if (atyp === 0x03 && buffer.length < 5) return;
       const need = atyp === 0x01 ? 10 : atyp === 0x04 ? 22 : 7 + buffer[4];
       if (buffer.length < need) return;
       if (rep !== 0x00) {
@@ -277,6 +286,11 @@ function connectSocks5(proxy, { host, port, timeoutMs = DEFAULT_TIMEOUT_MS }) {
         return fail(new Error(`SOCKS5 error ${reasons[rep] || rep} (${label(proxy)})`));
       }
       clearTimeout(timer);
+      // The handshake reader has to go: it stays attached for the life of the tunnel
+      // and keeps concatenating every byte the peer sends into `buffer`, so a
+      // keep-alive tunnel (vendor/http.js holds up to 4 per exit) grows with all the
+      // traffic that crosses it.
+      socket.removeListener('data', onData);
       const rest = buffer.slice(need);
       if (settled) return;
       settled = true;
@@ -311,6 +325,7 @@ function connectSocks4(proxy, { host, port, timeoutMs = DEFAULT_TIMEOUT_MS }) {
     const fail = (err) => {
       if (settled) return;
       settled = true;
+      clearTimeout(timer);
       socket.destroy();
       reject(err);
     };
@@ -319,17 +334,20 @@ function connectSocks4(proxy, { host, port, timeoutMs = DEFAULT_TIMEOUT_MS }) {
     socket.setNoDelay(true);
 
     let buffer = Buffer.alloc(0);
-    socket.on('data', (chunk) => {
+    const onData = (chunk) => {
       buffer = Buffer.concat([buffer, chunk]);
       if (buffer.length < 8) return;
       clearTimeout(timer);
       if (buffer[1] !== 0x5a) return fail(new Error(`SOCKS4 error code ${buffer[1]} (${label(proxy)})`));
+      // see the SOCKS5 branch: a hand-over must not leave this reader attached
+      socket.removeListener('data', onData);
       const rest = buffer.slice(8);
       if (settled) return;
       settled = true;
       if (rest.length) socket.unshift(rest);
       resolve(socket);
-    });
+    };
+    socket.on('data', onData);
 
     socket.on('connect', () => {
       const user = Buffer.from(proxy.username || '');
@@ -371,7 +389,6 @@ class ProxyAgent extends https.Agent {
     openTunnel(this.proxy, { host, port, timeoutMs: this.proxy.connectTimeoutMs || DEFAULT_CONNECT_TIMEOUT_MS })
       .then((socket) => {
         tunnel = socket;
-        if (options.secureEndpoint === false) return socket;
         const tlsSocket = tls.connect({
           socket,
           servername: options.servername || host,
