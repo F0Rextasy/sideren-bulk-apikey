@@ -1,6 +1,7 @@
 <div align="center">
 
 ```
+
 ███████╗██╗██████╗ ███████╗██████╗ ███████╗███╗   ██╗
 ██╔════╝██║██╔══██╗██╔════╝██╔══██╗██╔════╝████╗  ██║
 ███████╗██║██║  ██║█████╗  ██████╔╝█████╗  ██╔██╗ ██║
@@ -114,6 +115,7 @@ printf 'socks5://127.0.0.1:1080\n' > proxies.txt
 
 # 2) los
 node src/launcher.js            # interaktiv: mint / verify / settings / help
+
 # oder direkt:
 node src/cli.js --count 30      # beliebiges N — 30 ist nur das Standard‑Beispiel
 ```
@@ -142,6 +144,7 @@ node src/cli.js --verify-only    # Modelle + Guthaben + ein Chat‑Aufruf für j
 ## 🧭 Wie es funktioniert
 
 ```
+
 inbox (one address per account)                                  a fresh address per account
    │
    ├─▶ sign-up: Sideren page → e-mail address → code / link from the inbox

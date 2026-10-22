@@ -1,6 +1,7 @@
 <div align="center">
 
 ```
+
 ███████╗██╗██████╗ ███████╗██████╗ ███████╗███╗   ██╗
 ██╔════╝██║██╔══██╗██╔════╝██╔══██╗██╔════╝████╗  ██║
 ███████╗██║██║  ██║█████╗  ██████╔╝█████╗  ██╔██╗ ██║
@@ -114,6 +115,7 @@ printf 'socks5://127.0.0.1:1080\n' > proxies.txt
 
 # 2) go
 node src/launcher.js            # interactive: mint / verify / settings / help
+
 # or directly:
 node src/cli.js --count 30      # any N — 30 is just the default sample
 ```
@@ -142,6 +144,7 @@ node src/cli.js --verify-only    # models + balance + a chat call for every key
 ## 🧭 Como funciona
 
 ```
+
 inbox (one address per account)                                  a fresh address per account
    │
    ├─▶ sign-up: Sideren page → e-mail address → code / link from the inbox
