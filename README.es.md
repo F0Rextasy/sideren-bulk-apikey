@@ -19,6 +19,7 @@
 [![License](https://img.shields.io/badge/license-MIT-6ea8fe?style=for-the-badge)](LICENSE)
 [![Models](https://img.shields.io/badge/models-134%20served-412991?style=for-the-badge)](https://docs.layerx1.com)
 [![9Router](https://img.shields.io/badge/9Router-connector-8B5CF6?style=for-the-badge)](#-connect-to-9router)
+[![OmniRoute](https://img.shields.io/badge/OmniRoute-connector-8B5CF6?style=for-the-badge)](#-connect-to-omniroute)
 [![X](https://img.shields.io/badge/X-%40bigbullapp-000000?style=for-the-badge&logo=x&logoColor=white)](https://x.com/bigbullapp)
 
 [🛠 Inicio rápido](#-quick-start) · [🎁 Nivel gratuito](#-free-tier--how-much-you-get) · [🤖 Modelos](#-models--all-134-of-them) · [🧪 Usa la API](#-how-to-use-the-api) · [✅ Verificado](#-verified-working--every-key-is-tested) · [🧭 Cómo funciona](#-how-it-works) · [🔌 9Router](#-connect-to-9router) · [⚙️ Opciones](#️-cli-options) · [🛰️ Proxies](#️-behind-a-proxy) · [🐞 Problemas](#-issues)
@@ -201,6 +202,17 @@ node src/connect-9router.js \
 
 Valores predeterminados: base `http://localhost:20128`, contraseña `123456`, nodo `Sideren`, prefijo `sideren`, upstream `https://api.sideren.io/v1`, modelo predeterminado `@sdn/llama-3.3-70b`. Registra otra clave generada con `--name "<label 2>"` — cada clave se convierte en otra conexión entre las que 9Router puede balancear la carga. Los modelos se sirven entonces como `sideren/<model id>`.
 
+## 🔌 Conectar con OmniRoute
+
+[OmniRoute](https://omniroute.online) es un router autoalojado compatible con OpenAI. Un nodo `openai-compatible` para Sideren, una conexión por clave:
+
+```bash
+node src/connect-omniroute.js \
+  --base http://localhost:20128 --password 123456 \
+  --api-key <key>            # or env NINEROUTER_API_KEY
+```
+
+Valores predeterminados: base `http://localhost:20128`, contraseña `123456`, nodo `Sideren`, prefijo `sideren`, upstream `https://api.sideren.io/v1`, modelo predeterminado `@sdn/llama-3.3-70b`. Registra otra clave generada con `--name "<label 2>"` — cada clave se convierte en otra conexión entre las que OmniRoute puede balancear la carga. Los modelos se sirven entonces como `sideren/<model id>`.
 ## 🔑 Qué te ofrece una clave
 
 | | |

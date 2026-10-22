@@ -19,6 +19,7 @@
 [![License](https://img.shields.io/badge/license-MIT-6ea8fe?style=for-the-badge)](LICENSE)
 [![Models](https://img.shields.io/badge/models-134%20served-412991?style=for-the-badge)](https://docs.layerx1.com)
 [![9Router](https://img.shields.io/badge/9Router-connector-8B5CF6?style=for-the-badge)](#-connect-to-9router)
+[![OmniRoute](https://img.shields.io/badge/OmniRoute-connector-8B5CF6?style=for-the-badge)](#-connect-to-omniroute)
 [![X](https://img.shields.io/badge/X-%40bigbullapp-000000?style=for-the-badge&logo=x&logoColor=white)](https://x.com/bigbullapp)
 
 [🛠 クイックスタート](#-quick-start) · [🎁 無料枠](#-free-tier--how-much-you-get) · [🤖 モデル](#-models--all-134-of-them) · [🧪 API を使う](#-how-to-use-the-api) · [✅ 検証済み](#-verified-working--every-key-is-tested) · [🧭 仕組み](#-how-it-works) · [🔌 9Router](#-connect-to-9router) · [⚙️ オプション](#️-cli-options) · [🛰️ プロキシ](#️-behind-a-proxy) · [🐞 問題報告](#-issues)
@@ -201,6 +202,17 @@ node src/connect-9router.js \
 
 デフォルト: ベース `http://localhost:20128`、パスワード `123456`、ノード `Sideren`、プレフィックス `sideren`、アップストリーム `https://api.sideren.io/v1`、デフォルトモデル `@sdn/llama-3.3-70b`。発行した別のキーは `--name "<label 2>"` で登録します — キーごとに別の接続となり、9Router はその間で負荷分散できます。モデルはその後 `sideren/<model id>` として提供されます。
 
+## 🔌 OmniRoute に接続
+
+[OmniRoute](https://omniroute.online) はセルフホスト型の OpenAI 互換ルーターです。Sideren 用に1つの `openai-compatible` ノード、キーごとに1つの接続:
+
+```bash
+node src/connect-omniroute.js \
+  --base http://localhost:20128 --password 123456 \
+  --api-key <key>            # or env NINEROUTER_API_KEY
+```
+
+デフォルト: ベース `http://localhost:20128`、パスワード `123456`、ノード `Sideren`、プレフィックス `sideren`、アップストリーム `https://api.sideren.io/v1`、デフォルトモデル `@sdn/llama-3.3-70b`。発行した別のキーは `--name "<label 2>"` で登録します — キーごとに別の接続となり、OmniRoute はその間で負荷分散できます。モデルはその後 `sideren/<model id>` として提供されます。
 ## 🔑 1つのキーで得られるもの
 
 | | |

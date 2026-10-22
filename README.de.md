@@ -19,6 +19,7 @@
 [![License](https://img.shields.io/badge/license-MIT-6ea8fe?style=for-the-badge)](LICENSE)
 [![Models](https://img.shields.io/badge/models-134%20served-412991?style=for-the-badge)](https://docs.layerx1.com)
 [![9Router](https://img.shields.io/badge/9Router-connector-8B5CF6?style=for-the-badge)](#-connect-to-9router)
+[![OmniRoute](https://img.shields.io/badge/OmniRoute-connector-8B5CF6?style=for-the-badge)](#-connect-to-omniroute)
 [![X](https://img.shields.io/badge/X-%40bigbullapp-000000?style=for-the-badge&logo=x&logoColor=white)](https://x.com/bigbullapp)
 
 [🛠 Schnellstart](#-quick-start) · [🎁 Gratis‑Stufe](#-free-tier--how-much-you-get) · [🤖 Modelle](#-models--all-134-of-them) · [🧪 API verwenden](#-how-to-use-the-api) · [✅ Verifiziert](#-verified-working--every-key-is-tested) · [🧭 Wie es funktioniert](#-how-it-works) · [🔌 9Router](#-connect-to-9router) · [⚙️ Optionen](#️-cli-options) · [🛰️ Hinter einem Proxy](#️-behind-a-proxy) · [🐞 Probleme](#-issues)
@@ -201,6 +202,17 @@ node src/connect-9router.js \
 
 Standardwerte: Basis `http://localhost:20128`, Passwort `123456`, Knoten `Sideren`, Präfix `sideren`, Upstream `https://api.sideren.io/v1`, Standardmodell `@sdn/llama-3.3-70b`. Registrieren Sie einen weiteren erzeugten Schlüssel mit `--name "<label 2>"` — jeder Schlüssel wird zu einer weiteren Verbindung, die 9Router load‑balancen kann. Modelle werden dann als `sideren/<model id>` bereitgestellt.
 
+## 🔌 Verbindung zu OmniRoute
+
+[OmniRoute](https://omniroute.online) ist ein selbstgehosteter, OpenAI‑kompatibler Router. Ein `openai‑compatible`‑Knoten für Sideren, eine Verbindung pro Schlüssel:
+
+```bash
+node src/connect-omniroute.js \
+  --base http://localhost:20128 --password 123456 \
+  --api-key <key>            # oder env NINEROUTER_API_KEY
+```
+
+Standardwerte: Basis `http://localhost:20128`, Passwort `123456`, Knoten `Sideren`, Präfix `sideren`, Upstream `https://api.sideren.io/v1`, Standardmodell `@sdn/llama-3.3-70b`. Registrieren Sie einen weiteren erzeugten Schlüssel mit `--name "<label 2>"` — jeder Schlüssel wird zu einer weiteren Verbindung, die OmniRoute load‑balancen kann. Modelle werden dann als `sideren/<model id>` bereitgestellt.
 ## 🔑 Was ein Schlüssel Ihnen gibt
 
 | | |

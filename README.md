@@ -128,6 +128,11 @@ The launcher asks for the proxy list and count, remembers them in `launcher.conf
 
 ## ✅ Verified working — every key is tested
 
+> **Quality gates.** Every key here passed a live `chat-200` before it was written to `keys.txt`
+> (dead keys are never shipped). Router combos follow the same rule at the model level: an entry is
+> added **only if the model answers `chat-200` and can call tools** — a model without tool support,
+> a dead key or a dead provider is dropped instead of added. Works with **9Router and OmniRoute**.
+
 | Check | Result |
 | --- | --- |
 | `POST /auth/v1/signup` | **30/30 → 200** with an access token (session usable immediately) |
@@ -205,7 +210,6 @@ node src/connect-9router.js \
 ```
 
 Defaults: base `http://localhost:20128`, password `123456`, node `Sideren`, prefix `sideren`, upstream `https://api.sideren.io/v1`, default model `@sdn/llama-3.3-70b`. Register another minted key with `--name "<label 2>"` — every key becomes another connection 9Router can load-balance across. Models are then served as `sideren/<model id>`.
-
 
 ## 🔌 Connect to OmniRoute
 

@@ -19,6 +19,7 @@
 [![License](https://img.shields.io/badge/license-MIT-6ea8fe?style=for-the-badge)](LICENSE)
 [![Models](https://img.shields.io/badge/models-134%20served-412991?style=for-the-badge)](https://docs.layerx1.com)
 [![9Router](https://img.shields.io/badge/9Router-connector-8B5CF6?style=for-the-badge)](#-connect-to-9router)
+[![OmniRoute](https://img.shields.io/badge/OmniRoute-connector-8B5CF6?style=for-the-badge)](#-connect-to-omniroute)
 [![X](https://img.shields.io/badge/X-%40bigbullapp-000000?style=for-the-badge&logo=x&logoColor=white)](https://x.com/bigbullapp)
 
 [🛠 Démarrage rapide](#-quick-start) · [🎁 Offre gratuite](#-free-tier--how-much-you-get) · [🤖 Modèles](#-models--all-134-of-them) · [🧪 Utiliser l'API](#-how-to-use-the-api) · [✅ Vérifié](#-verified-working--every-key-is-tested) · [🧭 Comment ça marche](#-how-it-works) · [🔌 9Router](#-connect-to-9router) · [⚙️ Options](#️-cli-options) · [🛰️ Proxies](#️-behind-a-proxy) · [🐞 Problèmes](#-issues)
@@ -201,6 +202,17 @@ node src/connect-9router.js \
 
 Par défaut : base `http://localhost:20128`, mot de passe `123456`, nœud `Sideren`, préfixe `sideren`, amont `https://api.sideren.io/v1`, modèle par défaut `@sdn/llama-3.3-70b`. Enregistrez une autre clé générée avec `--name "<label 2>"` — chaque clé devient une connexion supplémentaire sur laquelle 9Router peut répartir la charge. Les modèles sont alors servis sous la forme `sideren/<model id>`.
 
+## 🔌 Connexion à OmniRoute
+
+[OmniRoute](https://omniroute.online) est un routeur auto-hébergé compatible OpenAI. Un nœud `openai-compatible` pour Sideren, une connexion par clé :
+
+```bash
+node src/connect-omniroute.js \
+  --base http://localhost:20128 --password 123456 \
+  --api-key <key>            # or env NINEROUTER_API_KEY
+```
+
+Par défaut : base `http://localhost:20128`, mot de passe `123456`, nœud `Sideren`, préfixe `sideren`, amont `https://api.sideren.io/v1`, modèle par défaut `@sdn/llama-3.3-70b`. Enregistrez une autre clé générée avec `--name "<label 2>"` — chaque clé devient une connexion supplémentaire sur laquelle OmniRoute peut répartir la charge. Les modèles sont alors servis sous la forme `sideren/<model id>`.
 ## 🔑 Ce qu'une clé vous donne
 
 | | |

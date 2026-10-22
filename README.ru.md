@@ -19,6 +19,7 @@
 [![Лицензия](https://img.shields.io/badge/license-MIT-6ea8fe?style=for-the-badge)](LICENSE)
 [![Модели](https://img.shields.io/badge/models-134%20served-412991?style=for-the-badge)](https://docs.layerx1.com)
 [![9Router](https://img.shields.io/badge/9Router-connector-8B5CF6?style=for-the-badge)](#-connect-to-9router)
+[![OmniRoute](https://img.shields.io/badge/OmniRoute-connector-8B5CF6?style=for-the-badge)](#-connect-to-omniroute)
 [![X](https://img.shields.io/badge/X-%40bigbullapp-000000?style=for-the-badge&logo=x&logoColor=white)](https://x.com/bigbullapp)
 
 [🛠 Быстрый старт](#-quick-start) · [🎁 Бесплатный тариф](#-free-tier--how-much-you-get) · [🤖 Модели](#-models--all-134-of-them) · [🧪 Использование API](#-how-to-use-the-api) · [✅ Проверено](#-verified-working--every-key-is-tested) · [🧭 Как это работает](#-how-it-works) · [🔌 9Router](#-connect-to-9router) · [⚙️ Параметры](#️-cli-options) · [🛰️ Прокси](#️-behind-a-proxy) · [🐞 Проблемы](#-issues)
@@ -201,6 +202,17 @@ node src/connect-9router.js \
 
 По умолчанию: base `http://localhost:20128`, пароль `123456`, узел `Sideren`, префикс `sideren`, upstream `https://api.sideren.io/v1`, модель по умолчанию `@sdn/llama-3.3-70b`. Зарегистрируйте ещё один созданный ключ с помощью `--name "<label 2>"` — каждый ключ становится отдельным подключением, между которыми 9Router может балансировать нагрузку. Модели затем обслуживаются как `sideren/<model id>`.
 
+## 🔌 Подключение к OmniRoute
+
+[OmniRoute](https://omniroute.online) — это self-hosted роутер, совместимый с OpenAI. Один узел `openai-compatible` для Sideren, одно подключение на ключ:
+
+```bash
+node src/connect-omniroute.js \
+  --base http://localhost:20128 --password 123456 \
+  --api-key <key>            # or env NINEROUTER_API_KEY
+```
+
+По умолчанию: base `http://localhost:20128`, пароль `123456`, узел `Sideren`, префикс `sideren`, upstream `https://api.sideren.io/v1`, модель по умолчанию `@sdn/llama-3.3-70b`. Зарегистрируйте ещё один созданный ключ с помощью `--name "<label 2>"` — каждый ключ становится отдельным подключением, между которыми OmniRoute может балансировать нагрузку. Модели затем обслуживаются как `sideren/<model id>`.
 ## 🔑 Что даёт один ключ
 
 | | |
