@@ -18,6 +18,7 @@
 [![License](https://img.shields.io/badge/license-MIT-6ea8fe?style=for-the-badge)](LICENSE)
 [![Models](https://img.shields.io/badge/models-134%20served-412991?style=for-the-badge)](https://docs.layerx1.com)
 [![9Router](https://img.shields.io/badge/9Router-connector-8B5CF6?style=for-the-badge)](#-connect-to-9router)
+[![OmniRoute](https://img.shields.io/badge/OmniRoute-connector-8B5CF6?style=for-the-badge)](#-connect-to-omniroute)
 [![X](https://img.shields.io/badge/X-%40bigbullapp-000000?style=for-the-badge&logo=x&logoColor=white)](https://x.com/bigbullapp)
 
 [🛠 Quick start](#-quick-start) · [🎁 Free tier](#-free-tier--how-much-you-get) · [🤖 Models](#-models--all-134-of-them) · [🧪 Use the API](#-how-to-use-the-api) · [✅ Verified](#-verified-working--every-key-is-tested) · [🧭 How it works](#-how-it-works) · [🔌 9Router](#-connect-to-9router) · [⚙️ Options](#️-cli-options) · [🛰️ Proxies](#️-behind-a-proxy) · [🐞 Issues](#-issues)
@@ -205,6 +206,18 @@ node src/connect-9router.js \
 
 Defaults: base `http://localhost:20128`, password `123456`, node `Sideren`, prefix `sideren`, upstream `https://api.sideren.io/v1`, default model `@sdn/llama-3.3-70b`. Register another minted key with `--name "<label 2>"` — every key becomes another connection 9Router can load-balance across. Models are then served as `sideren/<model id>`.
 
+
+## 🔌 Connect to OmniRoute
+
+[OmniRoute](https://omniroute.online) is a self-hosted, OpenAI-compatible router. One `openai-compatible` node for Sideren, one connection per key:
+
+```bash
+node src/connect-omniroute.js \
+  --base http://localhost:20128 --password 123456 \
+  --api-key <key>            # or env NINEROUTER_API_KEY
+```
+
+Defaults: base `http://localhost:20128`, password `123456`, node `Sideren`, prefix `sideren`, upstream `https://api.sideren.io/v1`, default model `@sdn/llama-3.3-70b`. Register another minted key with `--name "<label 2>"` — every key becomes another connection OmniRoute can load-balance across. Models are then served as `sideren/<model id>`.
 ## 🔑 What one key gets you
 
 | | |
